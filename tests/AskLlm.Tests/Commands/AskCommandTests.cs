@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using AskLlm.Commands;
 using AskLlm.Models;
@@ -36,13 +37,84 @@ public class AskCommandTests
 
         var result = await command.ExecuteAsync(null!, new AskCommandSettings
         {
-            Query = "Hi there",
-            Model = "gpt-test"
+            Query = "Hi there ",
+            Model = " gpt-test "
         });
 
         result.ShouldBe(0);
         await service.Received(1).SendChatRequestAsync(Arg.Is<ChatRequest>(r => r.Message == "Hi there" && r.Model == "gpt-test"), Arg.Any<CancellationToken>());
         console.Received(1).Write(Arg.Any<IRenderable>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_UsesInputFileContent_WhenSpecified()
+    {
+        var service = Substitute.For<IChatEndpointService>();
+        service.IsConfigured.Returns(true);
+        service.SendChatRequestAsync(Arg.Any<ChatRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new ChatResponse("response", "gpt-test", true));
+
+        var filePath = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(filePath, "File content");
+
+            var command = CreateCommand(service, Substitute.For<IAnsiConsole>());
+
+            var result = await command.ExecuteAsync(null!, new AskCommandSettings
+            {
+                Query = string.Empty,
+                Model = "gpt-test",
+                InputFile = filePath
+            });
+
+            result.ShouldBe(0);
+            await service.Received(1).SendChatRequestAsync(
+                Arg.Is<ChatRequest>(r => r.Message == "File content" && r.Model == "gpt-test"),
+                Arg.Any<CancellationToken>());
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WritesResponseToOutputFile_WhenSpecified()
+    {
+        var service = Substitute.For<IChatEndpointService>();
+        service.IsConfigured.Returns(true);
+        service.SendChatRequestAsync(Arg.Any<ChatRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new ChatResponse("output", "gpt-test", true));
+
+        var console = Substitute.For<IAnsiConsole>();
+        var command = CreateCommand(service, console);
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDirectory);
+        var outputPath = Path.Combine(tempDirectory, "result.txt");
+
+        try
+        {
+            var result = await command.ExecuteAsync(null!, new AskCommandSettings
+            {
+                Query = "Hello",
+                Model = "gpt-test",
+                OutputFile = outputPath
+            });
+
+            result.ShouldBe(0);
+            File.ReadAllText(outputPath).ShouldBe("output");
+        }
+        finally
+        {
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
+
+            Directory.Delete(tempDirectory, true);
+        }
     }
 
     [Fact]
@@ -118,6 +190,25 @@ public class AskCommandTests
         {
             Query = query,
             Model = model
+        });
+
+        result.ShouldBe(1);
+        await service.DidNotReceive().SendChatRequestAsync(Arg.Any<ChatRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ReturnsOne_WhenInputFileDoesNotExist()
+    {
+        var service = Substitute.For<IChatEndpointService>();
+        service.IsConfigured.Returns(true);
+
+        var command = CreateCommand(service, Substitute.For<IAnsiConsole>());
+
+        var result = await command.ExecuteAsync(null!, new AskCommandSettings
+        {
+            Query = string.Empty,
+            Model = "gpt-test",
+            InputFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))
         });
 
         result.ShouldBe(1);
