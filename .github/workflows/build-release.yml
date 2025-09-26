@@ -1,0 +1,95 @@
+name: build-and-create-release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    paths-ignore:
+      - ".github/**"
+      - ".gitignore"
+      - "README.md"
+      - "LICENSE"
+      - "CHANGELOG.md"
+      - "docs/**"
+      - "gitversion.yml"
+      - ".editorconfig"
+      - ".vs/**"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-tags: true
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v3.2.0
+      with:
+        versionSpec: '6.2.0'
+
+    - name: Get version
+      uses: gittools/actions/gitversion/execute@v3.2.0
+      id: get_version
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Publish Win x64 exe
+      run: dotnet publish src/AskLlm/AskLlm.csproj -c Release --os win --arch x64 -p:Version=${{ steps.get_version.outputs.MajorMinorPatch }}
+
+    - name: Publish Linux x64 binary
+      run: dotnet publish src/AskLlm/AskLlm.csproj -c Release --os linux --arch x64 -p:Version=${{ steps.get_version.outputs.MajorMinorPatch }}
+
+    - name: Upload Win build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: win-x64-build-v${{ steps.get_version.outputs.MajorMinorPatch }}
+        path: '**/bin/Release/net*/win-x64/publish/askllm.exe'
+        if-no-files-found: error
+
+    - name: Upload Linux build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-x64-build-v${{ steps.get_version.outputs.MajorMinorPatch }}
+        path: '**/bin/Release/net*/linux-x64/publish/askllm'
+        if-no-files-found: error
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.get_version.outputs.MajorMinorPatch }}
+        name: Release v${{ steps.get_version.outputs.MajorMinorPatch }}
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+        make_latest: true
+        files: |
+            **/bin/Release/net*/win-x64/publish/askllm.exe
+            **/bin/Release/net*/linux-x64/publish/askllm
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - id: scoop-file-update
+      name: scoop file version update
+      shell: pwsh
+      run: |
+        ./updatescoop.ps1 -Version ${{ steps.get_version.outputs.MajorMinorPatch }}
+
+    - uses: stefanzweifel/git-auto-commit-action@v5
+      name: Commit new scoop file
+      with:
+        commit_message: Update scoop file to version ${{ steps.get_version.outputs.MajorMinorPatch }}
+        file_pattern: ask-llm.json
