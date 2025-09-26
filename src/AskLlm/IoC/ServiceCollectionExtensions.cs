@@ -1,3 +1,4 @@
+using AskLlm.Commands;
 using AskLlm.Models;
 using AskLlm.Services;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +20,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(AskLlmSettings.LoadFromEnvironment(configuration));
         services.AddSingleton<IChatEndpointService, ChatEndpointService>();
         services.AddSingleton<IAnsiConsole>(_ => AnsiConsole.Console);
-        services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information));
+        services.AddTransient<AskCommand>();
+        services.AddLogging(builder =>
+        {
+            builder.ClearProviders();
+            builder.AddConsole();
+            builder.SetMinimumLevel(LogLevel.Information);
+        });
 
         return services;
     }

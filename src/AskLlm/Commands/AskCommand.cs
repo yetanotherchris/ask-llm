@@ -1,6 +1,5 @@
 using System;
 using System.Threading;
-using AskLlm.IoC;
 using AskLlm.Models;
 using AskLlm.Services;
 using Microsoft.Extensions.Logging;
@@ -38,14 +37,6 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
     private readonly IChatEndpointService _chatEndpointService;
     private readonly IAnsiConsole _console;
     private readonly ILogger<AskCommand> _logger;
-
-    public AskCommand()
-        : this(
-            ServiceProviderAccessor.GetRequiredService<IChatEndpointService>(),
-            ServiceProviderAccessor.GetRequiredService<IAnsiConsole>(),
-            ServiceProviderAccessor.GetRequiredService<ILogger<AskCommand>>())
-    {
-    }
 
     public AskCommand(IChatEndpointService chatEndpointService, IAnsiConsole console, ILogger<AskCommand> logger)
     {
@@ -110,5 +101,34 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
     private void RenderError(string message)
     {
         _console.MarkupLine($"[red]Error:[/] {Markup.Escape(message)}");
+    }
+}
+
+internal sealed class AskCommandProxy : AsyncCommand<AskCommandSettings>
+{
+    public override Task<int> ExecuteAsync(CommandContext context, AskCommandSettings settings)
+    {
+        if (context is null)
+        {
+            throw new InvalidOperationException("The command context must be provided.");
+        }
+
+        var command = context.Data as AskCommand ?? AskCommandEntryPoint.Resolve();
+        return command.ExecuteAsync(context, settings);
+    }
+}
+
+internal static class AskCommandEntryPoint
+{
+    private static AskCommand? _command;
+
+    public static void Configure(AskCommand command)
+    {
+        _command = command ?? throw new ArgumentNullException(nameof(command));
+    }
+
+    public static AskCommand Resolve()
+    {
+        return _command ?? throw new InvalidOperationException("The AskCommand has not been configured.");
     }
 }

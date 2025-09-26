@@ -13,16 +13,18 @@ public static class Program
         services.AddAskLlmServices();
 
         using var provider = services.BuildServiceProvider();
-        ServiceProviderAccessor.Configure(provider);
+        var askCommand = provider.GetRequiredService<AskCommand>();
+        AskCommandEntryPoint.Configure(askCommand);
 
-        var app = new CommandApp<AskCommand>();
+        var app = new CommandApp<AskCommandProxy>();
 
         app.Configure(config =>
         {
             config.SetApplicationName("askllm");
-            config.AddCommand<AskCommand>("ask")
+            config.AddCommand<AskCommandProxy>("ask")
                 .WithDescription("Send a query to a configured large language model.")
-                .WithExample(new[] { "askllm", "\"Hello there\"", "--model", "gpt-4o-mini" });
+                .WithExample(new[] { "askllm", "\"Hello there\"", "--model", "gpt-4o-mini" })
+                .WithData(askCommand);
             config.ValidateExamples();
         });
 
