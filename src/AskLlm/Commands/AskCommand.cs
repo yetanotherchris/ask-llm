@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using AskLlm.Models;
 using AskLlm.Services;
@@ -10,17 +11,31 @@ namespace AskLlm.Commands;
 
 public sealed class AskCommandSettings : CommandSettings
 {
-    [CommandArgument(0, "<query>")]
+    [CommandArgument(0, "[query]")]
     public string Query { get; init; } = string.Empty;
 
     [CommandOption("-m|--model")]
     public string Model { get; init; } = string.Empty;
 
+    [CommandOption("--input-file")]
+    public string? InputFile { get; init; }
+
+    [CommandOption("--output-file")]
+    public string? OutputFile { get; init; }
+
     public override ValidationResult Validate()
     {
-        if (string.IsNullOrWhiteSpace(Query))
+        var hasQuery = !string.IsNullOrWhiteSpace(Query);
+        var hasInputFile = !string.IsNullOrWhiteSpace(InputFile);
+
+        if (!hasQuery && !hasInputFile)
         {
-            return ValidationResult.Error("The query must not be empty.");
+            return ValidationResult.Error("A query must be provided or an input file must be specified using --input-file.");
+        }
+
+        if (hasInputFile && !File.Exists(InputFile))
+        {
+            return ValidationResult.Error("The file specified by --input-file does not exist.");
         }
 
         if (string.IsNullOrWhiteSpace(Model))
@@ -56,12 +71,19 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
 
         if (!_chatEndpointService.IsConfigured)
         {
-            const string message = "The ASKLLM_API_KEY environment variable is not configured.";
-            RenderError(message);
+            const string configurationError = "The ASKLLM_API_KEY environment variable is not configured.";
+            RenderError(configurationError);
             return 1;
         }
 
-        var request = new ChatRequest(settings.Query.Trim(), settings.Model.Trim());
+        var (requestMessage, resolveError) = await GetPromptTextAsync(settings).ConfigureAwait(false);
+        if (resolveError is not null)
+        {
+            RenderError(resolveError);
+            return 1;
+        }
+
+        var request = new ChatRequest(requestMessage!, settings.Model.Trim());
 
         try
         {
@@ -72,12 +94,21 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
 
             if (!response.Success)
             {
-                var error = response.ErrorMessage ?? "The model returned an unsuccessful response.";
-                RenderError(error);
+                var responseError = response.ErrorMessage ?? "The model returned an unsuccessful response.";
+                RenderError(responseError);
                 return 1;
             }
 
-            RenderSuccess(response);
+            if (!await TryWriteOutputFileAsync(settings, response.Content).ConfigureAwait(false))
+            {
+                return 1;
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.OutputFile))
+            {
+                RenderSuccess(response);
+            }
+
             return 0;
         }
         catch (Exception ex)
@@ -85,6 +116,52 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
             _logger.LogError(ex, "Unhandled exception while processing ask command.");
             RenderError("An unexpected error occurred. Please try again.");
             return 1;
+        }
+    }
+
+    private async Task<(string? Message, string? Error)> GetPromptTextAsync(AskCommandSettings settings)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.InputFile))
+        {
+            try
+            {
+                var content = await File.ReadAllTextAsync(settings.InputFile).ConfigureAwait(false);
+                return (content, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to read input file {File}", settings.InputFile);
+                return (null, "Unable to read the input file specified by --input-file.");
+            }
+        }
+
+        return (settings.Query.Trim(), null);
+    }
+
+    private async Task<bool> TryWriteOutputFileAsync(AskCommandSettings settings, string content)
+    {
+        if (string.IsNullOrWhiteSpace(settings.OutputFile))
+        {
+            return true;
+        }
+
+        try
+        {
+            var directory = Path.GetDirectoryName(settings.OutputFile);
+            if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            await File.WriteAllTextAsync(settings.OutputFile, content).ConfigureAwait(false);
+            _console.MarkupLine($"[green]Response written to {Markup.Escape(settings.OutputFile)}[/]");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to write output file {File}", settings.OutputFile);
+            RenderError("Unable to write the response to the specified output file.");
+            return false;
         }
     }
 
