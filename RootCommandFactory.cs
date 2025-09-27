@@ -36,6 +36,10 @@ public sealed class RootCommandFactory
         {
             ArgumentHelpName = "path"
         };
+        var colorOption = new Option<string?>("--color", "Optional Spectre.Console color name for response rendering.")
+        {
+            ArgumentHelpName = "color"
+        };
         var storeDefaultsOption = new Option<bool>("--store", "Store provided options (excluding --prompt) for future runs.");
         var versionOption = new Option<bool>("--version", "Show the application version.");
 
@@ -50,6 +54,7 @@ public sealed class RootCommandFactory
 
         rootCommand.AddAlias("ask");
         rootCommand.AddOption(versionOption);
+        rootCommand.AddOption(colorOption);
 
         rootCommand.SetHandler(async (InvocationContext context) =>
         {
@@ -75,6 +80,7 @@ public sealed class RootCommandFactory
                 Prompt = context.ParseResult.GetValueForOption(promptOption) ?? string.Empty,
                 InputFile = context.ParseResult.GetValueForOption(inputFileOption),
                 OutputFile = context.ParseResult.GetValueForOption(outputFileOption),
+                Color = (context.ParseResult.GetValueForOption(colorOption) ?? string.Empty).Trim(),
                 StoreDefaults = context.ParseResult.GetValueForOption(storeDefaultsOption)
             };
 
