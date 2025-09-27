@@ -37,7 +37,9 @@ jobs:
 
       - name: Set job output
         id: set_output
-        run: echo "version=${{ steps.get_version.outputs.MajorMinorPatch }}" >> $GITHUB_OUTPUT
+        run: |
+          version=${{ steps.get_version.outputs.MajorMinorPatch }}
+          echo "version=$version" >> $GITHUB_OUTPUT
 
     outputs:
       version: ${{ steps.set_output.outputs.version }}
