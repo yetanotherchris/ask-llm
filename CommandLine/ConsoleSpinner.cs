@@ -1,9 +1,10 @@
 ﻿
+using System;
+
 namespace AskLlm.CommandLine
 {
     public class ConsoleSpinner : IDisposable
     {
-        private static (int Left, int Top) _originalCursorPosition;
         private readonly CancellationTokenSource _cts;
         private readonly Task _spinnerTask;
         private bool _disposed = false;
@@ -17,8 +18,12 @@ namespace AskLlm.CommandLine
         private static async Task SpinAsync(string message, CancellationToken token)
         {
             var spinnerChars = new[] { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' };
-            var originalCursorVisible = Console.CursorVisible;
-            Console.CursorVisible = false;
+            bool? originalCursorVisible = null;
+            if (OperatingSystem.IsWindows())
+            {
+                originalCursorVisible = Console.CursorVisible;
+                Console.CursorVisible = false;
+            }
 
             var index = 0;
 
@@ -42,7 +47,10 @@ namespace AskLlm.CommandLine
                 // Second \r - Moves cursor back to the beginning of the line again
                 Console.Write($"\r{new string(' ', message.Length + 5)}\r");
 
-                Console.CursorVisible = originalCursorVisible;
+                if (originalCursorVisible.HasValue)
+                {
+                    Console.CursorVisible = originalCursorVisible.Value;
+                }
             }
         }
 

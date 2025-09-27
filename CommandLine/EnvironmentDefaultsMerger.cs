@@ -6,7 +6,7 @@ namespace AskLlm.CommandLine
     {
         public string GetStoredArgs()
         {
-            return Environment.GetEnvironmentVariable(EnvironmentVariableNames.Defaults, EnvironmentVariableTarget.User);
+            return Environment.GetEnvironmentVariable(EnvironmentVariableNames.Defaults, EnvironmentVariableTarget.User) ?? string.Empty;
         }
 
         public string[] MergeWithStoredDefaults(string[] args)
