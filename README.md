@@ -1,5 +1,5 @@
 # ask-llm
-Ask any large language model from your terminal using an OpenAI-compatible API. The app is a .NET 9 console application that uses Spectre.Console to provide a friendly command-line experience.
+Ask any large language model from your terminal using an OpenAI-compatible API. The app is a .NET 9 console application that uses ANSI coloring via [Crayon](https://github.com/riezebosch/crayon) to provide a friendly command-line experience.
 
 ## Download
 

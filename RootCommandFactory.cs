@@ -1,5 +1,5 @@
+using System;
 using AskLlm.Commands;
-using Spectre.Console;
 using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.Invocation;
@@ -10,12 +10,10 @@ namespace AskLlm;
 public sealed class RootCommandFactory
 {
     private readonly AskCommand _askCommand;
-    private readonly IAnsiConsole _console;
 
-    public RootCommandFactory(AskCommand askCommand, IAnsiConsole console)
+    public RootCommandFactory(AskCommand askCommand)
     {
         _askCommand = askCommand;
-        _console = console;
     }
 
     public RootCommand Create(string applicationVersion)
@@ -36,6 +34,10 @@ public sealed class RootCommandFactory
         {
             ArgumentHelpName = "path"
         };
+        var colorOption = new Option<string?>("--color", "Optional console color name used when rendering responses.")
+        {
+            ArgumentHelpName = "color"
+        };
         var storeDefaultsOption = new Option<bool>("--store", "Store provided options (excluding --prompt) for future runs.");
         var versionOption = new Option<bool>("--version", "Show the application version.");
 
@@ -45,7 +47,8 @@ public sealed class RootCommandFactory
             promptOption,
             inputFileOption,
             outputFileOption,
-            storeDefaultsOption
+            storeDefaultsOption,
+            colorOption
         };
 
         rootCommand.AddAlias("ask");
@@ -56,7 +59,7 @@ public sealed class RootCommandFactory
             var showVersion = context.ParseResult.GetValueForOption(versionOption);
             if (showVersion)
             {
-                _console.MarkupLine($"askllm v{Markup.Escape(applicationVersion)}");
+                context.Console.Out.Write($"askllm v{applicationVersion}{Environment.NewLine}");
                 context.ExitCode = 0;
                 return;
             }
@@ -75,6 +78,7 @@ public sealed class RootCommandFactory
                 Prompt = context.ParseResult.GetValueForOption(promptOption) ?? string.Empty,
                 InputFile = context.ParseResult.GetValueForOption(inputFileOption),
                 OutputFile = context.ParseResult.GetValueForOption(outputFileOption),
+                Color = context.ParseResult.GetValueForOption(colorOption),
                 StoreDefaults = context.ParseResult.GetValueForOption(storeDefaultsOption)
             };
 

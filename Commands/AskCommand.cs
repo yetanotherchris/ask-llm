@@ -2,22 +2,21 @@ using AskLlm;
 using AskLlm.Models;
 using AskLlm.Services;
 using Microsoft.Extensions.Logging;
-using Spectre.Console;
+using System;
 using System.IO;
 using System.Text;
+using static Crayon.Output;
 
 namespace AskLlm.Commands;
 
 public sealed class AskCommand
 {
     private readonly IChatEndpointService _chatEndpointService;
-    private readonly IAnsiConsole _console;
     private readonly ILogger<AskCommand> _logger;
 
-    public AskCommand(IChatEndpointService chatEndpointService, IAnsiConsole console, ILogger<AskCommand> logger)
+    public AskCommand(IChatEndpointService chatEndpointService, ILogger<AskCommand> logger)
     {
         _chatEndpointService = chatEndpointService;
-        _console = console;
         _logger = logger;
     }
 
@@ -35,7 +34,7 @@ public sealed class AskCommand
             return 1;
         }
 
-        if (!TryResolveColor(settings.Color, out var markupColor, out var colorError))
+        if (!TryResolveColor(settings.Color, out var responseColor, out var colorError))
         {
             RenderError(colorError!);
             return 1;
@@ -58,13 +57,9 @@ public sealed class AskCommand
 
         try
         {
-            ChatResponse? response = null;
+            Console.WriteLine("Requesting response from the LLM...");
 
-            await _console.Status()
-                .StartAsync("Requesting response from the LLM...", async _ =>
-                {
-                    response = await _chatEndpointService.SendChatRequestAsync(request, cancellationToken);
-                });
+            var response = await _chatEndpointService.SendChatRequestAsync(request, cancellationToken);
 
             if (response is null)
             {
@@ -86,7 +81,7 @@ public sealed class AskCommand
 
             if (string.IsNullOrWhiteSpace(settings.OutputFile))
             {
-                RenderSuccess(response, markupColor);
+                RenderSuccess(response, responseColor);
             }
 
             return 0;
@@ -134,7 +129,7 @@ public sealed class AskCommand
             }
 
             await File.WriteAllTextAsync(settings.OutputFile, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            _console.MarkupLine($"[green]Response written to {Markup.Escape(settings.OutputFile)}[/]");
+            Console.WriteLine(Bright.Green($"Response written to {settings.OutputFile}"));
             return true;
         }
         catch (Exception ex)
@@ -145,24 +140,26 @@ public sealed class AskCommand
         }
     }
 
-    private void RenderSuccess(ChatResponse response, string? markupColor)
+    private void RenderSuccess(ChatResponse response, ConsoleColor? color)
     {
-        var panel = new Panel(new Markup(Markup.Escape(response.Content)))
-            .Header(new PanelHeader($"Response from {Markup.Escape(response.Model)}"))
-            .Border(BoxBorder.Rounded)
-            .BorderStyle(new Style(Color.Green));
+        var header = $"Response from {response.Model}";
+        var separatorLength = Math.Max(header.Length, 24);
+        var separator = new string('=', separatorLength);
 
-        var escapedContent = Markup.Escape(response.Content);
-        var output = string.IsNullOrWhiteSpace(markupColor)
-            ? escapedContent
-            : $"[{markupColor}]{escapedContent}[/]";
+        Console.WriteLine();
+        Console.WriteLine(Bright.Green(separator));
+        Console.WriteLine(Bright.Green(header));
+        Console.WriteLine(Bright.Green(separator));
+        Console.WriteLine();
 
-        _console.Write(output);
+        var content = response.Content ?? string.Empty;
+        Console.WriteLine(ApplyColor(content, color));
+        Console.WriteLine();
     }
 
     private void RenderError(string message)
     {
-        _console.MarkupLine($"[red]Error:[/] {Markup.Escape(message)}");
+        Console.Error.WriteLine(Bright.Red($"Error: {message}"));
     }
 
     private bool TryStoreCommandDefaults(AskCommandSettings settings)
@@ -174,11 +171,11 @@ public sealed class AskCommand
 
             if (!string.IsNullOrWhiteSpace(defaults))
             {
-                _console.MarkupLine($"[green]Stored command defaults in {EnvironmentVariableNames.Defaults}.[/]");
+                Console.WriteLine(Bright.Green($"Stored command defaults in {EnvironmentVariableNames.Defaults}."));
             }
             else
             {
-                _console.MarkupLine("[green]Cleared stored command defaults.[/]");
+                Console.WriteLine(Bright.Green("Cleared stored command defaults."));
             }
 
             return true;
@@ -233,9 +230,9 @@ public sealed class AskCommand
         return $"\"{escaped}\"";
     }
 
-    private static bool TryResolveColor(string? colorValue, out string? markupColor, out string? error)
+    private static bool TryResolveColor(string? colorValue, out ConsoleColor? color, out string? error)
     {
-        markupColor = null;
+        color = null;
         error = null;
 
         if (string.IsNullOrWhiteSpace(colorValue))
@@ -245,16 +242,42 @@ public sealed class AskCommand
 
         var trimmed = colorValue.Trim();
 
-        try
+        if (Enum.TryParse(trimmed, ignoreCase: true, out ConsoleColor parsed))
         {
-            _ = new Markup($"[{trimmed}]test[/]");
-            markupColor = trimmed;
+            color = parsed;
             return true;
         }
-        catch (Exception)
+
+        error = "The value provided for --color is not a valid console color name.";
+        return false;
+    }
+
+    private static string ApplyColor(string text, ConsoleColor? color)
+    {
+        if (color is null)
         {
-            error = "The value provided for --color is not a valid Spectre.Console color.";
-            return false;
+            return text;
         }
+
+        return color.Value switch
+        {
+            ConsoleColor.Black => Black(text),
+            ConsoleColor.DarkBlue => Blue(text),
+            ConsoleColor.DarkGreen => Green(text),
+            ConsoleColor.DarkCyan => Cyan(text),
+            ConsoleColor.DarkRed => Red(text),
+            ConsoleColor.DarkMagenta => Magenta(text),
+            ConsoleColor.DarkYellow => Yellow(text),
+            ConsoleColor.DarkGray => Bright.Black(text),
+            ConsoleColor.Blue => Bright.Blue(text),
+            ConsoleColor.Green => Bright.Green(text),
+            ConsoleColor.Cyan => Bright.Cyan(text),
+            ConsoleColor.Red => Bright.Red(text),
+            ConsoleColor.Magenta => Bright.Magenta(text),
+            ConsoleColor.Yellow => Bright.Yellow(text),
+            ConsoleColor.Gray => Bright.White(text),
+            ConsoleColor.White => Bright.White(text),
+            _ => text
+        };
     }
 }
