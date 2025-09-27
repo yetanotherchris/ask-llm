@@ -47,10 +47,10 @@ jobs:
       run: dotnet restore
 
     - name: Publish Win x64 exe
-      run: dotnet publish src/AskLlm/AskLlm.csproj -c Release --os win --arch x64 -p:Version=${{ steps.get_version.outputs.MajorMinorPatch }}
+      run: dotnet publish AskLlm.csproj -c Release --os win --arch x64 -p:Version=${{ steps.get_version.outputs.MajorMinorPatch }}
 
     - name: Publish Linux x64 binary
-      run: dotnet publish src/AskLlm/AskLlm.csproj -c Release --os linux --arch x64 -p:Version=${{ steps.get_version.outputs.MajorMinorPatch }}
+      run: dotnet publish AskLlm.csproj -c Release --os linux --arch x64 -p:Version=${{ steps.get_version.outputs.MajorMinorPatch }}
 
     - name: Upload Win build artifact
       uses: actions/upload-artifact@v4
