@@ -1,36 +1,38 @@
-using System;
-using System.IO;
-using System.Threading;
 using AskLlm.Models;
 using AskLlm.Services;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.ComponentModel;
 
 namespace AskLlm.Commands;
 
-public sealed class AskCommandSettings : CommandSettings
+public class AskCommandSettings : CommandSettings
 {
-    [CommandArgument(0, "[query]")]
-    public string Query { get; init; } = string.Empty;
+    [CommandOption("--prompt")]
+    [Description("The prompt to send to the LLM")]
+    public string Prompt { get; init; } = string.Empty;
 
-    [CommandOption("-m|--model")]
+    [CommandOption("--model")]
+    [Description("The model to use with the LLM.")]
     public string Model { get; init; } = string.Empty;
 
     [CommandOption("--input-file")]
+    [Description("Optional file to use as the prompt.")]
     public string? InputFile { get; init; }
 
     [CommandOption("--output-file")]
+    [Description("Optional file to write the LLM response to.")]
     public string? OutputFile { get; init; }
 
     public override ValidationResult Validate()
     {
-        var hasQuery = !string.IsNullOrWhiteSpace(Query);
+        var hasPrompt = !string.IsNullOrWhiteSpace(Prompt);
         var hasInputFile = !string.IsNullOrWhiteSpace(InputFile);
 
-        if (!hasQuery && !hasInputFile)
+        if (!hasPrompt && !hasInputFile)
         {
-            return ValidationResult.Error("A query must be provided or an input file must be specified using --input-file.");
+            return ValidationResult.Error("A prompt must be provided or an input file must be specified using --input-file.");
         }
 
         if (hasInputFile && !File.Exists(InputFile))
@@ -47,7 +49,7 @@ public sealed class AskCommandSettings : CommandSettings
     }
 }
 
-public sealed class AskCommand : AsyncCommand<AskCommandSettings>
+public class AskCommand : AsyncCommand<AskCommandSettings>
 {
     private readonly IChatEndpointService _chatEndpointService;
     private readonly IAnsiConsole _console;
@@ -76,7 +78,7 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
             return 1;
         }
 
-        var (requestMessage, resolveError) = await GetPromptTextAsync(settings).ConfigureAwait(false);
+        var (requestMessage, resolveError) = await GetPromptTextAsync(settings);
         if (resolveError is not null)
         {
             RenderError(resolveError);
@@ -87,10 +89,7 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
 
         try
         {
-            var response = await _chatEndpointService.SendChatRequestAsync(
-                    request,
-                    CancellationToken.None)
-                .ConfigureAwait(false);
+            var response = await _chatEndpointService.SendChatRequestAsync(request, CancellationToken.None);
 
             if (!response.Success)
             {
@@ -99,7 +98,7 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
                 return 1;
             }
 
-            if (!await TryWriteOutputFileAsync(settings, response.Content).ConfigureAwait(false))
+            if (!await TryWriteOutputFileAsync(settings, response.Content))
             {
                 return 1;
             }
@@ -135,7 +134,7 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
             }
         }
 
-        return (settings.Query.Trim(), null);
+        return (settings.Prompt.Trim(), null);
     }
 
     private async Task<bool> TryWriteOutputFileAsync(AskCommandSettings settings, string content)
@@ -153,7 +152,7 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
                 Directory.CreateDirectory(directory);
             }
 
-            await File.WriteAllTextAsync(settings.OutputFile, content).ConfigureAwait(false);
+            await File.WriteAllTextAsync(settings.OutputFile, content);
             _console.MarkupLine($"[green]Response written to {Markup.Escape(settings.OutputFile)}[/]");
             return true;
         }
@@ -172,40 +171,11 @@ public sealed class AskCommand : AsyncCommand<AskCommandSettings>
             .Border(BoxBorder.Rounded)
             .BorderStyle(new Style(Color.Green));
 
-        _console.Write(panel);
+        _console.Write(Markup.Escape(response.Content));
     }
 
     private void RenderError(string message)
     {
         _console.MarkupLine($"[red]Error:[/] {Markup.Escape(message)}");
-    }
-}
-
-internal sealed class AskCommandProxy : AsyncCommand<AskCommandSettings>
-{
-    public override Task<int> ExecuteAsync(CommandContext context, AskCommandSettings settings)
-    {
-        if (context is null)
-        {
-            throw new InvalidOperationException("The command context must be provided.");
-        }
-
-        var command = context.Data as AskCommand ?? AskCommandEntryPoint.Resolve();
-        return command.ExecuteAsync(context, settings);
-    }
-}
-
-internal static class AskCommandEntryPoint
-{
-    private static AskCommand? _command;
-
-    public static void Configure(AskCommand command)
-    {
-        _command = command ?? throw new ArgumentNullException(nameof(command));
-    }
-
-    public static AskCommand Resolve()
-    {
-        return _command ?? throw new InvalidOperationException("The AskCommand has not been configured.");
     }
 }

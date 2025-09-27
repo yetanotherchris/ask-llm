@@ -1,6 +1,4 @@
-using System;
 using System.Text;
-using System.Threading;
 using AskLlm.Models;
 using Microsoft.Extensions.Logging;
 using OpenAI;
@@ -11,6 +9,8 @@ namespace AskLlm.Services;
 
 public class ChatEndpointService : IChatEndpointService
 {
+    public bool IsConfigured => _settings.IsValid;
+
     private readonly AskLlmSettings _settings;
     private readonly ILogger<ChatEndpointService> _logger;
 
@@ -19,8 +19,6 @@ public class ChatEndpointService : IChatEndpointService
         _settings = settings;
         _logger = logger;
     }
-
-    public bool IsConfigured => _settings.IsValid;
 
     public async Task<ChatResponse> SendChatRequestAsync(ChatRequest request, CancellationToken cancellationToken = default)
     {
@@ -62,7 +60,7 @@ public class ChatEndpointService : IChatEndpointService
                 new ChatMessage[]
                 {
                     new UserChatMessage(request.Message)
-                }).ConfigureAwait(false);
+                });
 
             var completion = completionResult.Value;
 

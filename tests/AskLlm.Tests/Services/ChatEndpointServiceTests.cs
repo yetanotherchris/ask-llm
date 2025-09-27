@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AskLlm.Models;
 using AskLlm.Services;
 using AskLlm.Tests.Support;
+using Microsoft.Extensions.Configuration;
 using Shouldly;
 using Xunit;
 
@@ -77,7 +78,12 @@ public sealed class ChatEndpointServiceTests : IDisposable
     {
         Environment.SetEnvironmentVariable("ASKLLM_API_KEY", key);
         Environment.SetEnvironmentVariable("ASKLLM_API_ENDPOINT", endpoint);
-        var settings = AskLlmSettings.LoadFromEnvironment();
+
+        var configuration = new ConfigurationBuilder()
+            .AddEnvironmentVariables()
+            .Build();
+
+        var settings = AskLlmSettings.Create(configuration);
         return new ChatEndpointService(settings, TestLoggerFactory.CreateLogger<ChatEndpointService>());
     }
 }

@@ -19,12 +19,8 @@ public class AskLlmSettings
         ApiEndpoint = apiEndpoint;
     }
 
-    public static AskLlmSettings LoadFromEnvironment(IConfiguration? configuration = null)
+    public static AskLlmSettings Create(IConfiguration configuration)
     {
-        configuration ??= new ConfigurationBuilder()
-            .AddEnvironmentVariables()
-            .Build();
-
         var apiKey = configuration["ASKLLM_API_KEY"] ?? string.Empty;
         var endpoint = configuration["ASKLLM_API_ENDPOINT"];
 

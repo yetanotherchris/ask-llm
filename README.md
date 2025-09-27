@@ -52,7 +52,7 @@ export ASKLLM_API_ENDPOINT="https://your-endpoint.example/v1" # optional
 
 ```
 USAGE:
-    askllm --model <model_name> "<query>"
+    askllm --model <model_name> --prompt "<prompt>"
 
 OPTIONS:
     -m, --model <model_name>    The model identifier to send the request to (required)
@@ -62,11 +62,11 @@ OPTIONS:
 ### Examples
 
 ```powershell
-askllm.exe --model "x-ai/grok-4-fast:free" "Write a haiku about dotnet"
+askllm.exe --model "x-ai/grok-4-fast:free" --prompt "Write a haiku about dotnet"
 ```
 ```bash
-./askllm --model gpt-4o-mini "Translate 'How are you?' to French"
-askllm --model gpt-4o-mini "Summarise the latest commit"
+./askllm --model gpt-4o-mini --prompt "Translate 'How are you?' to French"
+askllm --model gpt-4o-mini --prompt "Summarise the latest commit"
 ```
 
 If you clone the source (requires [.NET 9](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) preview or later):

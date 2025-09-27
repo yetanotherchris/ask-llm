@@ -37,7 +37,7 @@ public class AskCommandTests
 
         var result = await command.ExecuteAsync(null!, new AskCommandSettings
         {
-            Query = "Hi there ",
+            Prompt = "Hi there ",
             Model = " gpt-test "
         });
 
@@ -63,7 +63,7 @@ public class AskCommandTests
 
             var result = await command.ExecuteAsync(null!, new AskCommandSettings
             {
-                Query = string.Empty,
+                Prompt = string.Empty,
                 Model = "gpt-test",
                 InputFile = filePath
             });
@@ -98,7 +98,7 @@ public class AskCommandTests
         {
             var result = await command.ExecuteAsync(null!, new AskCommandSettings
             {
-                Query = "Hello",
+                Prompt = "Hello",
                 Model = "gpt-test",
                 OutputFile = outputPath
             });
@@ -128,7 +128,7 @@ public class AskCommandTests
 
         var result = await command.ExecuteAsync(null!, new AskCommandSettings
         {
-            Query = "Question",
+            Prompt = "Question",
             Model = "gpt-test"
         });
 
@@ -148,7 +148,7 @@ public class AskCommandTests
 
         var result = await command.ExecuteAsync(null!, new AskCommandSettings
         {
-            Query = "Question",
+            Prompt = "Question",
             Model = "gpt-test"
         });
 
@@ -167,7 +167,7 @@ public class AskCommandTests
 
         var result = await command.ExecuteAsync(null!, new AskCommandSettings
         {
-            Query = "Question",
+            Prompt = "Question",
             Model = "gpt-test"
         });
 
@@ -179,7 +179,7 @@ public class AskCommandTests
     [InlineData("   ", "gpt-test")]
     [InlineData("Question", "")]
     [InlineData("Question", "   ")]
-    public async Task ExecuteAsync_ReturnsOne_WhenValidationFails(string query, string model)
+    public async Task ExecuteAsync_ReturnsOne_WhenValidationFails(string prompt, string model)
     {
         var service = Substitute.For<IChatEndpointService>();
         service.IsConfigured.Returns(true);
@@ -188,7 +188,7 @@ public class AskCommandTests
 
         var result = await command.ExecuteAsync(null!, new AskCommandSettings
         {
-            Query = query,
+            Prompt = prompt,
             Model = model
         });
 
@@ -206,7 +206,7 @@ public class AskCommandTests
 
         var result = await command.ExecuteAsync(null!, new AskCommandSettings
         {
-            Query = string.Empty,
+            Prompt = string.Empty,
             Model = "gpt-test",
             InputFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))
         });
