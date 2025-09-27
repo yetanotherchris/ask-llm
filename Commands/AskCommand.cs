@@ -26,6 +26,10 @@ public class AskCommandSettings : CommandSettings
     [Description("Optional file to write the LLM response to.")]
     public string? OutputFile { get; init; }
 
+    [CommandOption("--color")]
+    [Description("Optional color to use when rendering the response in the terminal.")]
+    public string? Color { get; init; }
+
     [CommandOption("--store")]
     [Description("Store the provided options (excluding --prompt) for future runs.")]
     public bool StoreDefaults { get; init; }
@@ -81,6 +85,12 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
             return 1;
         }
 
+        if (!TryResolveColor(settings.Color, out var markupColor, out var colorError))
+        {
+            RenderError(colorError!);
+            return 1;
+        }
+
         if (!_chatEndpointService.IsConfigured)
         {
             const string configurationError = "The ASKLLM_API_KEY environment variable is not configured.";
@@ -127,7 +137,7 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
 
             if (string.IsNullOrWhiteSpace(settings.OutputFile))
             {
-                RenderSuccess(response);
+                RenderSuccess(response, markupColor);
             }
 
             return 0;
@@ -174,7 +184,7 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
                 Directory.CreateDirectory(directory);
             }
 
-            await File.WriteAllTextAsync(settings.OutputFile, content);
+            await File.WriteAllTextAsync(settings.OutputFile, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
             _console.MarkupLine($"[green]Response written to {Markup.Escape(settings.OutputFile)}[/]");
             return true;
         }
@@ -186,14 +196,19 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
         }
     }
 
-    private void RenderSuccess(ChatResponse response)
+    private void RenderSuccess(ChatResponse response, string? markupColor)
     {
         var panel = new Panel(new Markup(Markup.Escape(response.Content)))
             .Header(new PanelHeader($"Response from {Markup.Escape(response.Model)}"))
             .Border(BoxBorder.Rounded)
             .BorderStyle(new Style(Color.Green));
 
-        _console.Write(Markup.Escape(response.Content));
+        var escapedContent = Markup.Escape(response.Content);
+        var output = string.IsNullOrWhiteSpace(markupColor)
+            ? escapedContent
+            : $"[{markupColor}]{escapedContent}[/]";
+
+        _console.Write(output);
     }
 
     private void RenderError(string message)
@@ -234,6 +249,7 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
         AppendOption(builder, "--model", settings.Model);
         AppendOption(builder, "--input-file", settings.InputFile);
         AppendOption(builder, "--output-file", settings.OutputFile);
+        AppendOption(builder, "--color", settings.Color);
 
         return builder.ToString();
     }
@@ -266,5 +282,30 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
     {
         var escaped = value.Replace("\\", "\\\\").Replace("\"", "\\\"");
         return $"\"{escaped}\"";
+    }
+
+    private static bool TryResolveColor(string? colorValue, out string? markupColor, out string? error)
+    {
+        markupColor = null;
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(colorValue))
+        {
+            return true;
+        }
+
+        var trimmed = colorValue.Trim();
+
+        try
+        {
+            _ = new Markup($"[{trimmed}]test[/]");
+            markupColor = trimmed;
+            return true;
+        }
+        catch (Exception)
+        {
+            error = "The value provided for --color is not a valid Spectre.Console color.";
+            return false;
+        }
     }
 }
