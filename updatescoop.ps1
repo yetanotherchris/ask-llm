@@ -4,16 +4,12 @@ param(
     $Version
 )
 
-$searchRoot = Join-Path -Path $PSScriptRoot -ChildPath 'src/AskLlm/bin/Release'
-if (-not (Test-Path -Path $searchRoot)) {
-    throw "Publish output not found at $searchRoot"
-}
-
-$searchPattern = "*publish/askllm.exe"
-$askLlmFile = Get-ChildItem -Path $searchRoot -Force -Recurse -File | Where-Object { $_.FullName -like $searchPattern } | Select-Object -First 1
+# Look for the renamed Windows executable in the current directory
+$searchPattern = "askllm-v$Version-win-x64.exe"
+$askLlmFile = Get-ChildItem -Path $PSScriptRoot -File | Where-Object { $_.Name -eq $searchPattern } | Select-Object -First 1
 
 if (-not $askLlmFile) {
-    throw "Unable to locate askllm.exe in the publish output."
+    throw "Unable to locate $searchPattern in the current directory."
 }
 
 $filePath = $askLlmFile.FullName
@@ -25,9 +21,11 @@ $manifest = @{
     version = $Version
     architecture = @{
         '64bit' = @{
-            url = "https://github.com/yetanotherchris/ask-llm/releases/download/v$Version/askllm.exe"
+            url = "https://github.com/yetanotherchris/ask-llm/releases/download/v$Version/askllm-v$Version-win-x64.exe"
             bin = @("askllm.exe")
             hash = $hash
+            extract_dir = ""
+            pre_install = @("Rename-Item `"`$dir\askllm-v$Version-win-x64.exe`" `"askllm.exe`"")
         }
     }
     homepage = "https://github.com/yetanotherchris/ask-llm"
