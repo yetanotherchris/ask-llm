@@ -17,9 +17,23 @@ on:
       - ".vs/**"
 
 jobs:
-  prepare:
-    name: Prepare version
-    runs-on: ubuntu-latest
+  build:
+    name: Build Native AOT (matrix)
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact_name: linux-x64-build
+            file_name: askllm
+          - os: windows-latest
+            rid: win-x64
+            artifact_name: win-x64-build
+            file_name: askllm.exe
+
+    runs-on: ${{ matrix.os }}
+    outputs:
+      VERSION: ${{ steps.set_output.outputs.VERSION }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,35 +53,10 @@ jobs:
         id: set_output
         run: |
           version=${{ steps.get_version.outputs.MajorMinorPatch }}
-          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
 
-    outputs:
-      version: ${{ steps.set_output.outputs.version }}
-
-  build:
-    name: Build Native AOT (matrix)
-    needs: prepare
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            rid: linux-x64
-            artifact_name: linux-x64-build
-            file_name: askllm
-          - os: windows-latest
-            rid: win-x64
-            artifact_name: win-x64-build
-            file_name: askllm.exe
-            
-    runs-on: ${{ matrix.os }}
-    steps:
       - name: Set VERSION env
-        run: echo "VERSION=${{ needs.prepare.outputs.version }}" >> $GITHUB_ENV
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-tags: true
-          fetch-depth: 0
+        run: echo "VERSION=${{ steps.get_version.outputs.MajorMinorPatch }}" >> $GITHUB_ENV
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -96,7 +85,7 @@ jobs:
       contents: write
     steps:
       - name: Set VERSION env
-        run: echo "VERSION=${{ needs.prepare.outputs.version }}" >> $GITHUB_ENV
+        run: echo "VERSION=${{ needs.build.outputs.VERSION }}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
