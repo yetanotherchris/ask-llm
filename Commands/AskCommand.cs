@@ -2,7 +2,6 @@ using AskLlm.Models;
 using AskLlm.Services;
 using AskLlm;
 using Microsoft.Extensions.Logging;
-using Spectre.Console;
 using System.Text;
 
 namespace AskLlm.Commands;
