@@ -1,8 +1,5 @@
 using AskLlm.Commands;
 using System.CommandLine;
-using System.CommandLine.Help;
-using System.CommandLine.Invocation;
-using System.CommandLine.Parsing;
 
 namespace AskLlm.CommandLine
 {
@@ -50,17 +47,11 @@ namespace AskLlm.CommandLine
             };
 
             rootCommand.AddAlias("ask");
+            rootCommand.Name = "askllm";
+            rootCommand.Description = "Send a prompt to an LLM provider.";
 
             rootCommand.SetHandler(async (context) =>
             {
-                if (!HasUserProvidedInput(context.ParseResult))
-                {
-                    var helpContext = new HelpContext(context.HelpBuilder, rootCommand, Console.Out, context.ParseResult);
-                    context.HelpBuilder.Write(helpContext);
-                    context.ExitCode = 0;
-                    return;
-                }
-
                 var settings = new AskCommandSettings
                 {
                     Model = (context.ParseResult.GetValueForOption(modelOption) ?? string.Empty).Trim(),
@@ -78,9 +69,5 @@ namespace AskLlm.CommandLine
             return rootCommand;
         }
 
-        private static bool HasUserProvidedInput(ParseResult parseResult)
-        {
-            return parseResult.Tokens.Count > 0 || parseResult.UnmatchedTokens.Count > 0;
-        }
     }
 }

@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.CommandLine;
+using System.CommandLine.Builder;
+using System.CommandLine.Parsing;
 using System.Reflection;
 
 namespace AskLlm;
@@ -20,13 +22,22 @@ public static class Program
         await using var provider = services.BuildServiceProvider();
         await using var scope = provider.CreateAsyncScope();
 
-        var defaultsStore = scope.ServiceProvider.GetRequiredService<DefaultsStore>();
-        var mergedArgs = defaultsStore.MergeWithStoredDefaults(args);
-
         var commandFactory = scope.ServiceProvider.GetRequiredService<RootCommandFactory>();
         var rootCommand = commandFactory.Create(GetVersion());
 
-        return await rootCommand.InvokeAsync(mergedArgs);
+        // Use CommandLineBuilder to enable built-in version support
+        var commandLineBuilder = new CommandLineBuilder(rootCommand)
+            .UseVersionOption()
+            .UseHelp()
+            .UseParseErrorReporting()
+            .UseExceptionHandler()
+            .CancelOnProcessTermination();
+
+        var defaultsStore = scope.ServiceProvider.GetRequiredService<DefaultsStore>();
+        var mergedArgs = defaultsStore.MergeWithStoredDefaults(args);
+
+        var parser = commandLineBuilder.Build();
+        return parser.Invoke(mergedArgs);
     }
 
     private static ServiceCollection SetupIoC(this ServiceCollection services)

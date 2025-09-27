@@ -66,6 +66,26 @@ namespace AskLlm.CommandLine
 
         public string[] MergeWithStoredDefaults(string[] args)
         {
+            if (args.Length == 0)
+            {
+                return args;
+            }
+            
+            if (args.Length == 1 && args[0] == "--version")
+            {
+                return args;
+            }
+            if (args.Length == 1 && args[0] == "--help" || args[0] == "-h" || args[0] == "?")
+            {
+                return args;
+            }
+
+            string promptOnly = string.Join(" ", args);
+            if (string.IsNullOrWhiteSpace(promptOnly))
+            {
+                return args;
+            }
+
             var defaultsRaw = GetStoredDefaults();
             if (string.IsNullOrWhiteSpace(defaultsRaw))
             {
@@ -73,7 +93,6 @@ namespace AskLlm.CommandLine
             }
 
             // Support "askllm here is my prompt" when the defaults have already been set
-            string promptOnly = string.Join("", args);
             if (!promptOnly.Contains("--"))
             {
                 args = new string[] { "--prompt", $"\"{promptOnly}\"" };
