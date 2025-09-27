@@ -1,15 +1,15 @@
 {
   "architecture": {
     "64bit": {
-      "url": "https://github.com/yetanotherchris/ask-llm/releases/download/v1.0.0/askllm.exe",
       "bin": [
         "askllm.exe"
       ],
-      "hash": "E9EB05E91A7E9D77A78C581DCEAB8DF50172A2F84A551FCFA1DEDF4DA8F557B9"
+      "url": "https://github.com/yetanotherchris/ask-llm/releases/download/v1.1.0/askllm.exe",
+      "hash": "24954BDC167785234DFB8F8BB9F2A712E8E3003781BD827EF120957E87C08272"
     }
   },
   "description": "Ask any large language model from your terminal via OpenAI-compatible APIs.",
-  "version": "1.0.0",
+  "license": "MIT License",
   "homepage": "https://github.com/yetanotherchris/ask-llm",
-  "license": "MIT License"
+  "version": "1.1.0"
 }
