@@ -77,6 +77,12 @@ public sealed class AskCommand
             return 1;
         }
 
+        if (!TryResolveColor(settings.Color, out var markupColor, out var colorError))
+        {
+            RenderError(colorError!);
+            return 1;
+        }
+
         if (!_chatEndpointService.IsConfigured)
         {
             RenderError($"The {EnvironmentVariableNames.ApiKey} environment variable is not configured.");
@@ -122,7 +128,7 @@ public sealed class AskCommand
 
             if (string.IsNullOrWhiteSpace(settings.OutputFile))
             {
-                RenderSuccess(response);
+                RenderSuccess(response, markupColor);
             }
 
             return 0;
@@ -169,7 +175,7 @@ public sealed class AskCommand
                 Directory.CreateDirectory(directory);
             }
 
-            await File.WriteAllTextAsync(settings.OutputFile, content);
+            await File.WriteAllTextAsync(settings.OutputFile, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
             _console.MarkupLine($"[green]Response written to {Markup.Escape(settings.OutputFile)}[/]");
             return true;
         }
@@ -181,14 +187,19 @@ public sealed class AskCommand
         }
     }
 
-    private void RenderSuccess(ChatResponse response)
+    private void RenderSuccess(ChatResponse response, string? markupColor)
     {
         var panel = new Panel(new Markup(Markup.Escape(response.Content)))
             .Header(new PanelHeader($"Response from {Markup.Escape(response.Model)}"))
             .Border(BoxBorder.Rounded)
             .BorderStyle(new Style(Color.Green));
 
-        _console.Write(Markup.Escape(response.Content));
+        var escapedContent = Markup.Escape(response.Content);
+        var output = string.IsNullOrWhiteSpace(markupColor)
+            ? escapedContent
+            : $"[{markupColor}]{escapedContent}[/]";
+
+        _console.Write(output);
     }
 
     private void RenderError(string message)
@@ -229,6 +240,7 @@ public sealed class AskCommand
         AppendOption(builder, "--model", settings.Model);
         AppendOption(builder, "--input-file", settings.InputFile);
         AppendOption(builder, "--output-file", settings.OutputFile);
+        AppendOption(builder, "--color", settings.Color);
 
         return builder.ToString();
     }
@@ -261,5 +273,30 @@ public sealed class AskCommand
     {
         var escaped = value.Replace("\\", "\\\\").Replace("\"", "\\\"");
         return $"\"{escaped}\"";
+    }
+
+    private static bool TryResolveColor(string? colorValue, out string? markupColor, out string? error)
+    {
+        markupColor = null;
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(colorValue))
+        {
+            return true;
+        }
+
+        var trimmed = colorValue.Trim();
+
+        try
+        {
+            _ = new Markup($"[{trimmed}]test[/]");
+            markupColor = trimmed;
+            return true;
+        }
+        catch (Exception)
+        {
+            error = "The value provided for --color is not a valid Spectre.Console color.";
+            return false;
+        }
     }
 }
