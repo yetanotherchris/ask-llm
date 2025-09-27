@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Extensions.Configuration;
+using AskLlm;
 
 namespace AskLlm.Models;
 
@@ -21,8 +22,8 @@ public class AskLlmSettings
 
     public static AskLlmSettings Create(IConfiguration configuration)
     {
-        var apiKey = configuration["ASKLLM_API_KEY"] ?? string.Empty;
-        var endpoint = configuration["ASKLLM_API_ENDPOINT"];
+        var apiKey = configuration[EnvironmentVariableNames.ApiKey] ?? string.Empty;
+        var endpoint = configuration[EnvironmentVariableNames.ApiEndpoint];
 
         if (string.IsNullOrWhiteSpace(endpoint))
         {
