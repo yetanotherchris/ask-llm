@@ -51,9 +51,9 @@ jobs:
 
       - name: Set job output
         id: set_output
+        shell: pwsh
         run: |
-          version=${{ steps.get_version.outputs.MajorMinorPatch }}
-          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          "VERSION=${{ steps.get_version.outputs.MajorMinorPatch }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Set VERSION env
         run: echo "VERSION=${{ steps.get_version.outputs.MajorMinorPatch }}" >> $GITHUB_ENV
@@ -128,7 +128,7 @@ jobs:
         name: scoop file version update
         shell: pwsh
         run: |
-          ./updatescoop.ps1 -Version ${{ env.VERSION }}
+          & ./updatescoop.ps1 -Version ${{ env.VERSION }}
 
       - uses: stefanzweifel/git-auto-commit-action@v5
         name: Commit new scoop file
