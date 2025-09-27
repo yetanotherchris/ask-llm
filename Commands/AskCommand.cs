@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
+using System.Text;
 
 namespace AskLlm.Commands;
 
@@ -24,6 +25,10 @@ public class AskCommandSettings : CommandSettings
     [CommandOption("--output-file")]
     [Description("Optional file to write the LLM response to.")]
     public string? OutputFile { get; init; }
+
+    [CommandOption("--store")]
+    [Description("Store the provided options (excluding --prompt) for future runs.")]
+    public bool StoreDefaults { get; init; }
 
     public override ValidationResult Validate()
     {
@@ -68,6 +73,11 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
         if (!validation.Successful)
         {
             RenderError(validation.Message ?? "Invalid command input.");
+            return 1;
+        }
+
+        if (settings.StoreDefaults && !TryStoreCommandDefaults(settings))
+        {
             return 1;
         }
 
@@ -189,5 +199,72 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
     private void RenderError(string message)
     {
         _console.MarkupLine($"[red]Error:[/] {Markup.Escape(message)}");
+    }
+
+    private bool TryStoreCommandDefaults(AskCommandSettings settings)
+    {
+        try
+        {
+            var defaults = BuildDefaultsString(settings);
+            Environment.SetEnvironmentVariable("ASKLLM_DEFAULTS", string.IsNullOrWhiteSpace(defaults) ? null : defaults);
+
+            if (!string.IsNullOrWhiteSpace(defaults))
+            {
+                _console.MarkupLine("[green]Stored command defaults in ASKLLM_DEFAULTS.[/]");
+            }
+            else
+            {
+                _console.MarkupLine("[green]Cleared stored command defaults.[/]");
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to store command defaults.");
+            RenderError("Unable to store the command defaults in the ASKLLM_DEFAULTS environment variable.");
+            return false;
+        }
+    }
+
+    private static string BuildDefaultsString(AskCommandSettings settings)
+    {
+        var builder = new StringBuilder();
+
+        AppendOption(builder, "--model", settings.Model);
+        AppendOption(builder, "--input-file", settings.InputFile);
+        AppendOption(builder, "--output-file", settings.OutputFile);
+
+        return builder.ToString();
+    }
+
+    private static void AppendOption(StringBuilder builder, string optionName, string? optionValue)
+    {
+        if (string.IsNullOrWhiteSpace(optionValue))
+        {
+            return;
+        }
+
+        var trimmedValue = optionValue.Trim();
+
+        if (trimmedValue.Length == 0)
+        {
+            return;
+        }
+
+        if (builder.Length > 0)
+        {
+            builder.Append(' ');
+        }
+
+        builder.Append(optionName);
+        builder.Append(' ');
+        builder.Append(Quote(trimmedValue));
+    }
+
+    private static string Quote(string value)
+    {
+        var escaped = value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        return $"\"{escaped}\"";
     }
 }
