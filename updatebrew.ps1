@@ -44,10 +44,21 @@ $formulaContent = $formulaContent -replace 'url "https://github\.com/yetanotherc
 $formulaContent = $formulaContent -replace 'url "https://github\.com/yetanotherchris/ask-llm/releases/download/v[\d\.]+/askllm-v[\d\.]+-osx-x64"', "url `"https://github.com/yetanotherchris/ask-llm/releases/download/v$Version/askllm-v$Version-osx-x64`""
 $formulaContent = $formulaContent -replace 'url "https://github\.com/yetanotherchris/ask-llm/releases/download/v[\d\.]+/askllm-v[\d\.]+-linux-x64"', "url `"https://github.com/yetanotherchris/ask-llm/releases/download/v$Version/askllm-v$Version-linux-x64`""
 
-# Update hashes
-$formulaContent = $formulaContent -replace 'sha256 "PLACEHOLDER_ARM64_HASH"', "sha256 `"$osxArm64Hash`""
-$formulaContent = $formulaContent -replace 'sha256 "PLACEHOLDER_X64_HASH"', "sha256 `"$osxX64Hash`""
-$formulaContent = $formulaContent -replace 'sha256 "PLACEHOLDER_LINUX_HASH"', "sha256 `"$linuxX64Hash`""
+# Update hashes - replace any existing hash values
+# Split content into lines for easier processing
+$lines = $formulaContent -split "`n"
+for ($i = 0; $i -lt $lines.Length; $i++) {
+    if ($lines[$i] -match 'if Hardware::CPU\.arm\?' -and $i + 2 -lt $lines.Length -and $lines[$i + 2] -match 'sha256') {
+        $lines[$i + 2] = $lines[$i + 2] -replace 'sha256 "[a-fA-F0-9]+"', "sha256 `"$($osxArm64Hash.ToLower())`""
+    }
+    elseif ($lines[$i] -match 'else' -and $i + 2 -lt $lines.Length -and $lines[$i + 2] -match 'sha256') {
+        $lines[$i + 2] = $lines[$i + 2] -replace 'sha256 "[a-fA-F0-9]+"', "sha256 `"$($osxX64Hash.ToLower())`""
+    }
+    elseif ($lines[$i] -match 'on_linux do' -and $i + 2 -lt $lines.Length -and $lines[$i + 2] -match 'sha256') {
+        $lines[$i + 2] = $lines[$i + 2] -replace 'sha256 "[a-fA-F0-9]+"', "sha256 `"$($linuxX64Hash.ToLower())`""
+    }
+}
+$formulaContent = $lines -join "`n"
 
 # Update install section to use correct filenames
 $formulaContent = $formulaContent -replace 'bin\.install "askllm-v[\d\.]+-osx-arm64"', "bin.install `"askllm-v$Version-osx-arm64`""
