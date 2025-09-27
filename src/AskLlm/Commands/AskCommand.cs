@@ -89,7 +89,19 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
 
         try
         {
-            var response = await _chatEndpointService.SendChatRequestAsync(request, CancellationToken.None);
+            ChatResponse? response = null;
+
+            await _console.Status()
+                .StartAsync("Requesting response from the LLM...", async _ =>
+                {
+                    response = await _chatEndpointService.SendChatRequestAsync(request, CancellationToken.None);
+                });
+
+            if (response is null)
+            {
+                RenderError("The LLM response could not be retrieved.");
+                return 1;
+            }
 
             if (!response.Success)
             {
