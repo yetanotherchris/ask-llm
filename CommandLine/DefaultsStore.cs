@@ -72,6 +72,13 @@ namespace AskLlm.CommandLine
                 return args;
             }
 
+            // Support "askllm here is my prompt" when the defaults have already been set
+            string promptOnly = string.Join("", args);
+            if (!promptOnly.Contains("--"))
+            {
+                args = new string[] { "--prompt", $"\"{promptOnly}\"" };
+            }
+
             var defaultArguments = SplitArguments(defaultsRaw);
             if (defaultArguments.Count == 0)
             {

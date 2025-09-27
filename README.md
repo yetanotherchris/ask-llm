@@ -1,23 +1,33 @@
 # ask-llm
-Ask any large language model from your terminal using an OpenAI-compatible API. The app is a .NET 9 console application that uses ANSI coloring via [Crayon](https://github.com/riezebosch/crayon) to provide a friendly command-line experience.
+Ask an LLM (OpenAI-compatible API) something from your terminal.
+
+## Example usage
+
+These examples use [www.openrouter.ai's model names](https://openrouter.ai/models?q=free).  
+See the [provider examples](providers.md) for configuring Gemini, Claude, ChatGPT etc.
+
+```bash
+askllm --model "x-ai/grok-4-fast:free" --prompt "Write a haiku about dotnet"
+askllm --model "deepseek/deepseek-r1-0528:free" --prompt "What is love?" --store
+askllm --prompt "Tell me about Camus's Myth of Sisyphus in one paragraph"
+
+# Requires --store to be used first
+askllm "'Wait! Wait! Now, bomb, consider this next question very carefully.  What is your one purpose in life?'"
+
+echo "The tortoise lays on its back, its belly baking in the hot sun, beating its legs 
+trying to turn itself over, but it can't. Not without your help. But you're not helping  
+Why is that?" > input.txt
+
+askllm --input-file "input.txt" --output-file "response.txt"
+
+```
 
 ## Download
 
-[![GitHub Release](https://img.shields.io/github/v/release/yetanotherchris/ask-llm?logo=github&sort=semver)](https://github.com/yetanotherchris/ask-llm/releases/latest)
+[![GitHub Release](https://img.shields.io/github/v/release/yetanotherchris/ask-llm?logo=github&sort=semver)](https://github.com/yetanotherchris/ask-llm/releases/latest)  
+*Note: you do not need .NET installed for askllm to work, it is standalone.*
 
-You can download the latest version of ask-llm using PowerShell or Bash:
-
-```powershell
-Invoke-WebRequest -Uri "https://github.com/yetanotherchris/ask-llm/releases/latest/download/askllm.exe" -OutFile "askllm.exe"
-```
-```bash
-wget -O askllm "https://github.com/yetanotherchris/ask-llm/releases/latest/download/askllm"
-chmod +x askllm
-```
-```bash
-curl -L "https://github.com/yetanotherchris/ask-llm/releases/latest/download/askllm" -o askllm
-chmod +x askllm
-```
+**Package managers**
 
 Scoop on Windows:
 ```powershell
@@ -31,87 +41,60 @@ brew tap yetanotherchris/ask-llm https://github.com/yetanotherchris/ask-llm
 brew install ask-llm
 ```
 
-You can also download the latest release directly from the [Releases page](https://github.com/yetanotherchris/ask-llm/releases).
+**Via your terminal**
+
+```powershell
+Invoke-WebRequest -Uri "https://github.com/yetanotherchris/ask-llm/releases/latest/download/askllm.exe" -OutFile "askllm.exe"
+```
+```bash
+wget -O askllm "https://github.com/yetanotherchris/ask-llm/releases/latest/download/askllm"
+chmod +x askllm
+```
+```bash
+curl -L "https://github.com/yetanotherchris/ask-llm/releases/latest/download/askllm" -o askllm
+chmod +x askllm
+```
+
+And finally the [Github Releases page](https://github.com/yetanotherchris/ask-llm/releases).
+
 
 ## Configuration
 
 ask-llm reads its configuration from environment variables:
 
-- `ASKLLM_API_KEY` (required): API key used to authenticate with your OpenAI-compatible endpoint.
-- `ASKLLM_API_ENDPOINT` (optional): Override the default endpoint (`https://openrouter.ai/api/v1`).
+- `ASK_LLM_API_KEY` (required): API key used to authenticate with your OpenAI-compatible endpoint.
+- `ASK_LLM_API_ENDPOINT` (optional): Override the default endpoint (`https://openrouter.ai/api/v1`).
 
-See [Provider Examples](providers.md) for common OpenAI-compatible providers, their base URLs, and how to create API keys.
+See the [provider examples](providers.md) for common OpenAI-compatible providers, their base URLs, and how to create API keys.
 
-### Setting environment variables
-
-PowerShell:
-```powershell
-$env:ASKLLM_API_KEY = "sk-..."
-$env:ASKLLM_API_ENDPOINT = "https://your-endpoint.example/v1" # optional
-```
-
-Bash:
-```bash
-export ASKLLM_API_KEY="sk-..."
-export ASKLLM_API_ENDPOINT="https://your-endpoint.example/v1" # optional
-```
+`ASK_LLM_DEFAULT` is used to store default command line options, but not the prompt. On Linux and Mac this will be written to your bash profile.
 
 ## Usage
 
 ```
-USAGE:
-    askllm --model <model_name> --prompt "<prompt>"
+Description:
+  Send a prompt to an LLM provider.
 
-OPTIONS:
-    -m, --model <model_name>    The model identifier to send the request to (required)
-    -h, --help                  Show command help
+Usage:
+  askllm [options]
+
+Options:
+  --model <model_name>  The model identifier to send the request to.
+  --prompt <prompt>     The prompt text to send to the model.
+  --input-file <path>   Optional file path that supplies the prompt text.
+  --output-file <path>  Optional file path to write the response to.
+  --store               Store provided options (excluding --prompt) for future runs.
+  --color <color>       Optional console color name used when rendering responses.
+  --version             Show version information
+  -?, -h, --help        Show help and usage information
 ```
 
-### Examples
+#### Local development
 
-```powershell
-askllm.exe --model "x-ai/grok-4-fast:free" --prompt "Write a haiku about dotnet"
-```
-```bash
-./askllm --model gpt-4o-mini --prompt "Translate 'How are you?' to French"
-askllm --model gpt-4o-mini --prompt "Summarise the latest commit"
-```
-
-If you clone the source (requires [.NET 9](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) preview or later):
+Requires [.NET 9](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) or later  
+Clone the repository, set your environmental variables and then use:
 
 ```bash
 dotnet restore
-dotnet run --project AskLlm.csproj -- --model gpt-4o-mini "Hello there"
+dotnet run --project AskLlm.csproj -- --model "openai/gpt-5" "Write a C# app to write a C# app to write a C# app"
 ```
-
-### Publishing
-
-Publishing uses Native AOT so the app starts quickly while remaining self-contained. When you're ready to ship a release build, run:
-
-```bash
-dotnet publish -c Release -r linux-x64 -p:StripSymbols=true
-```
-
-Replace `linux-x64` with the runtime identifier you need (for example, `win-x64` or `osx-arm64`). The output single-file binary bundles the required .NET runtime so it can run on machines without the SDK installed.
-
-### Startup performance
-
-The first-run startup time improves significantly when using the Native AOT publish profile. Measurements were taken inside a Ubuntu 22.04 container with `askllm --help` and a fresh `DOTNET_CLI_HOME` to avoid a warmed .NET runtime.
-
-| Publish mode | Publish command | Cold start (s) |
-| --- | --- | --- |
-| Self-contained (JIT) | `dotnet publish -c Release -r linux-x64 -p:PublishAot=false -p:SelfContained=true -p:PublishSingleFile=true -p:StripSymbols=true` | 0.510 |
-| Native AOT | `dotnet publish -c Release -r linux-x64 -p:StripSymbols=true` | 0.074 |
-
-Your exact results will vary depending on hardware, runtime identifier, and the prompt you execute, but the relative difference between JIT and Native AOT publishing should remain similar.
-
-## Development
-
-```bash
-dotnet build
-dotnet test
-```
-
-## License
-
-ask-llm is licensed under the [MIT License](LICENSE).
