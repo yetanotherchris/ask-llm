@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.CommandLine;
 using System.Reflection;
-using Spectre.Console;
 
 namespace AskLlm;
 
@@ -47,7 +46,6 @@ public static class Program
         services.AddScoped<AskCommand>();
         services.AddSingleton<EnvironmentDefaultsMerger>();
         services.AddScoped<RootCommandFactory>();
-        services.AddSingleton<IAnsiConsole>(_ => AnsiConsole.Console);
 
         return services;
     }

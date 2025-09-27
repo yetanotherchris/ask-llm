@@ -1,7 +1,7 @@
 # AskLLM Application Specification
 
 ## Project Overview
-Create a C# .NET 9 console application named "askllm" that queries Large Language Models via OpenAI-compatible APIs using dependency injection and displays responses using Spectre.Console.
+Create a C# .NET 9 console application named "askllm" that queries Large Language Models via OpenAI-compatible APIs using dependency injection and displays responses using ANSI-colored console output.
 
 ## Technical Requirements
 
@@ -12,9 +12,8 @@ Create a C# .NET 9 console application named "askllm" that queries Large Languag
 - **Namespace**: `AskLlm`
 
 ### Required NuGet Packages
-- Spectre.Console
+- Crayon
 - OpenAI (from https://github.com/openai/openai-dotnet)
-- Spectre.Console.Cli
 - Microsoft.Extensions.DependencyInjection
 - Microsoft.Extensions.Logging
 - Microsoft.Extensions.Configuration
@@ -61,7 +60,6 @@ askllm <query> --model <model_name>
 ### Dependency Injection
 - Use Microsoft.Extensions.DependencyInjection
 - Configure services using extension methods
-- Use custom TypeRegistrar and TypeResolver for Spectre.Console.Cli integration
 - Inject services into commands via constructor injection
 
 ### Service Layer
@@ -98,9 +96,9 @@ askllm <query> --model <model_name>
 - Service unavailable
 
 ### Output Formatting
-- Use Spectre.Console for all output
-- Success responses with panels or markup for clean formatting
-- Error messages with red styling
+- Use ANSI escape sequences via Crayon for colored output
+- Success responses should clearly label the model alongside the generated content
+- Error messages should be displayed in red styling
 - Include model information in successful responses
 
 ## Unit Testing Requirements
