@@ -2,7 +2,7 @@
   "profiles": {
     "AskLlm": {
       "commandName": "Project",
-      "commandLineArgs": "--prompt \"hello world\" \r\n--model \"x-ai/grok-4-fast:free\""
+      "commandLineArgs": "--prompt \"hello world\" \r\n--model \"x-ai/grok-4-fast:free\" --color Magenta"
     }
   }
 }

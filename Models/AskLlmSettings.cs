@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Extensions.Configuration;
 using AskLlm;
+using AskLlm.CommandLine;
 
 namespace AskLlm.Models;
 

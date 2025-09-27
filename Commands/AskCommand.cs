@@ -1,4 +1,5 @@
 using AskLlm;
+using AskLlm.CommandLine;
 using AskLlm.Models;
 using AskLlm.Services;
 using Microsoft.Extensions.Logging;
@@ -57,9 +58,10 @@ public sealed class AskCommand
 
         try
         {
-            Console.WriteLine("Requesting response from the LLM...");
 
+            var spinner = new ConsoleSpinner($"Asking '{settings.Model}'...");
             var response = await _chatEndpointService.SendChatRequestAsync(request, cancellationToken);
+            spinner.Dispose();
 
             if (response is null)
             {
@@ -142,19 +144,8 @@ public sealed class AskCommand
 
     private void RenderSuccess(ChatResponse response, ConsoleColor? color)
     {
-        var header = $"Response from {response.Model}";
-        var separatorLength = Math.Max(header.Length, 24);
-        var separator = new string('=', separatorLength);
-
-        Console.WriteLine();
-        Console.WriteLine(Bright.Green(separator));
-        Console.WriteLine(Bright.Green(header));
-        Console.WriteLine(Bright.Green(separator));
-        Console.WriteLine();
-
         var content = response.Content ?? string.Empty;
         Console.WriteLine(ApplyColor(content, color));
-        Console.WriteLine();
     }
 
     private void RenderError(string message)
@@ -167,7 +158,7 @@ public sealed class AskCommand
         try
         {
             var defaults = BuildDefaultsString(settings);
-            Environment.SetEnvironmentVariable(EnvironmentVariableNames.Defaults, string.IsNullOrWhiteSpace(defaults) ? null : defaults);
+            Environment.SetEnvironmentVariable(EnvironmentVariableNames.Defaults, string.IsNullOrWhiteSpace(defaults) ? null : defaults, EnvironmentVariableTarget.User);
 
             if (!string.IsNullOrWhiteSpace(defaults))
             {
