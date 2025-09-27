@@ -34,6 +34,8 @@ ask-llm reads its configuration from environment variables:
 - `ASKLLM_API_KEY` (required): API key used to authenticate with your OpenAI-compatible endpoint.
 - `ASKLLM_API_ENDPOINT` (optional): Override the default endpoint (`https://openrouter.ai/api/v1`).
 
+See [Provider Examples](providers.md) for common OpenAI-compatible providers, their base URLs, and how to create API keys.
+
 ### Setting environment variables
 
 PowerShell:
@@ -73,7 +75,7 @@ If you clone the source (requires [.NET 9](https://dotnet.microsoft.com/en-us/do
 
 ```bash
 dotnet restore
-dotnet run --project src/AskLlm/AskLlm.csproj -- --model gpt-4o-mini "Hello there"
+dotnet run --project AskLlm.csproj -- --model gpt-4o-mini "Hello there"
 ```
 
 ## Development
