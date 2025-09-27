@@ -17,6 +17,8 @@ public sealed class AskCommandSettings
 
     public string? OutputFile { get; set; }
 
+    public string? Color { get; set; }
+
     public bool StoreDefaults { get; set; }
 
     public CommandValidationResult Validate()
