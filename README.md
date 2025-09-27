@@ -19,10 +19,16 @@ curl -L "https://github.com/yetanotherchris/ask-llm/releases/latest/download/ask
 chmod +x askllm
 ```
 
-Scoop.sh on Windows:
+Scoop on Windows:
 ```powershell
 scoop bucket add ask-llm https://github.com/yetanotherchris/ask-llm
 scoop install ask-llm
+```
+
+Homebrew on macOS/Linux:
+```bash
+brew tap yetanotherchris/ask-llm https://github.com/yetanotherchris/ask-llm
+brew install ask-llm
 ```
 
 You can also download the latest release directly from the [Releases page](https://github.com/yetanotherchris/ask-llm/releases).

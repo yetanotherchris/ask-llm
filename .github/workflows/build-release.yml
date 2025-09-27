@@ -30,6 +30,14 @@ jobs:
             rid: win-x64
             artifact_name: win-x64-build
             file_name: askllm.exe
+          - os: macos-latest
+            rid: osx-x64
+            artifact_name: osx-x64-build
+            file_name: askllm
+          - os: macos-latest
+            rid: osx-arm64
+            artifact_name: osx-arm64-build
+            file_name: askllm
 
     runs-on: ${{ matrix.os }}
     outputs:
@@ -110,10 +118,24 @@ jobs:
         with:
           name: win-x64-build
 
+      - name: Download macOS x64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: osx-x64-build
+          path: osx-x64/
+
+      - name: Download macOS ARM64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: osx-arm64-build
+          path: osx-arm64/
+
       - name: Rename artifacts
         run: |
           mv askllm askllm-v${{ env.VERSION }}-linux-x64
           mv askllm.exe askllm-v${{ env.VERSION }}-win-x64.exe
+          mv osx-x64/askllm askllm-v${{ env.VERSION }}-osx-x64
+          mv osx-arm64/askllm askllm-v${{ env.VERSION }}-osx-arm64
 
       - name: Create Release
         id: create_release
@@ -128,6 +150,8 @@ jobs:
           files: |
             askllm-v${{ env.VERSION }}-win-x64.exe
             askllm-v${{ env.VERSION }}-linux-x64
+            askllm-v${{ env.VERSION }}-osx-x64
+            askllm-v${{ env.VERSION }}-osx-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -140,8 +164,14 @@ jobs:
         run: |
           & ./updatescoop.ps1 -Version ${{ env.VERSION }}
 
+      - id: brew-file-update
+        name: homebrew formula version update
+        shell: pwsh
+        run: |
+          & ./updatebrew.ps1 -Version ${{ env.VERSION }}
+
       - uses: stefanzweifel/git-auto-commit-action@v5
-        name: Commit new scoop file
+        name: Commit new scoop and homebrew files
         with:
-          commit_message: Update scoop file to version ${{ env.VERSION }}
-          file_pattern: ask-llm.json
+          commit_message: Update scoop and homebrew files to version ${{ env.VERSION }}
+          file_pattern: ask-llm.json Formula/ask-llm.rb
