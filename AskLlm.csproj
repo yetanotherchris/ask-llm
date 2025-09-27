@@ -6,13 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>askllm</AssemblyName>
-    <PublishAot>false</PublishAot>
-    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishAot>true</PublishAot>
+    <PublishReadyToRun>false</PublishReadyToRun>
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <OptimizationPreference>Speed</OptimizationPreference>
     <Version>0.1.0</Version>
     <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
     <InformationalVersion>0.1.0-local</InformationalVersion>
   </PropertyGroup>
 
@@ -24,8 +25,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
     <PackageReference Include="OpenAI" Version="2.5.0" />
     <PackageReference Include="Spectre.Console" Version="0.51.1" />
-    <PackageReference Include="Spectre.Console.Cli" Version="0.51.1" />
-    <PackageReference Include="Spectre.Console.Cli.Extensions.DependencyInjection" Version="0.7.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
 </Project>

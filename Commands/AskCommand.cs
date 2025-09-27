@@ -1,64 +1,56 @@
 using AskLlm.Models;
 using AskLlm.Services;
+using AskLlm;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
-using Spectre.Console.Cli;
-using System.ComponentModel;
 using System.Text;
 
 namespace AskLlm.Commands;
 
-public class AskCommandSettings : CommandSettings
+public sealed class AskCommandSettings
 {
-    [CommandOption("--prompt")]
-    [Description("The prompt to send to the LLM")]
-    public string Prompt { get; init; } = string.Empty;
+    public string Prompt { get; set; } = string.Empty;
 
-    [CommandOption("--model")]
-    [Description("The model to use with the LLM.")]
-    public string Model { get; init; } = string.Empty;
+    public string Model { get; set; } = string.Empty;
 
-    [CommandOption("--input-file")]
-    [Description("Optional file to use as the prompt.")]
-    public string? InputFile { get; init; }
+    public string? InputFile { get; set; }
 
-    [CommandOption("--output-file")]
-    [Description("Optional file to write the LLM response to.")]
-    public string? OutputFile { get; init; }
+    public string? OutputFile { get; set; }
 
-    [CommandOption("--color")]
-    [Description("Optional color to use when rendering the response in the terminal.")]
-    public string? Color { get; init; }
+    public bool StoreDefaults { get; set; }
 
-    [CommandOption("--store")]
-    [Description("Store the provided options (excluding --prompt) for future runs.")]
-    public bool StoreDefaults { get; init; }
-
-    public override ValidationResult Validate()
+    public CommandValidationResult Validate()
     {
         var hasPrompt = !string.IsNullOrWhiteSpace(Prompt);
         var hasInputFile = !string.IsNullOrWhiteSpace(InputFile);
 
         if (!hasPrompt && !hasInputFile)
         {
-            return ValidationResult.Error("A prompt must be provided or an input file must be specified using --input-file.");
+            return CommandValidationResult.Error("A prompt must be provided or an input file must be specified using --input-file.");
         }
 
         if (hasInputFile && !File.Exists(InputFile))
         {
-            return ValidationResult.Error("The file specified by --input-file does not exist.");
+            return CommandValidationResult.Error("The file specified by --input-file does not exist.");
         }
 
         if (string.IsNullOrWhiteSpace(Model))
         {
-            return ValidationResult.Error("A model must be specified using --model.");
+            return CommandValidationResult.Error("A model must be specified using --model.");
         }
 
-        return ValidationResult.Success();
+        return CommandValidationResult.Success();
     }
 }
 
-public class AskCommand : AsyncCommand<AskCommandSettings>
+public readonly record struct CommandValidationResult(bool Successful, string? Message)
+{
+    public static CommandValidationResult Success() => new(true, null);
+
+    public static CommandValidationResult Error(string message) => new(false, message);
+}
+
+public sealed class AskCommand
 {
     private readonly IChatEndpointService _chatEndpointService;
     private readonly IAnsiConsole _console;
@@ -71,7 +63,7 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
         _logger = logger;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, AskCommandSettings settings)
+    public async Task<int> ExecuteAsync(AskCommandSettings settings, CancellationToken cancellationToken)
     {
         var validation = settings.Validate();
         if (!validation.Successful)
@@ -93,8 +85,7 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
 
         if (!_chatEndpointService.IsConfigured)
         {
-            const string configurationError = "The ASKLLM_API_KEY environment variable is not configured.";
-            RenderError(configurationError);
+            RenderError($"The {EnvironmentVariableNames.ApiKey} environment variable is not configured.");
             return 1;
         }
 
@@ -114,7 +105,7 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
             await _console.Status()
                 .StartAsync("Requesting response from the LLM...", async _ =>
                 {
-                    response = await _chatEndpointService.SendChatRequestAsync(request, CancellationToken.None);
+                    response = await _chatEndpointService.SendChatRequestAsync(request, cancellationToken);
                 });
 
             if (response is null)
@@ -221,11 +212,11 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
         try
         {
             var defaults = BuildDefaultsString(settings);
-            Environment.SetEnvironmentVariable("ASKLLM_DEFAULTS", string.IsNullOrWhiteSpace(defaults) ? null : defaults);
+            Environment.SetEnvironmentVariable(EnvironmentVariableNames.Defaults, string.IsNullOrWhiteSpace(defaults) ? null : defaults);
 
             if (!string.IsNullOrWhiteSpace(defaults))
             {
-                _console.MarkupLine("[green]Stored command defaults in ASKLLM_DEFAULTS.[/]");
+                _console.MarkupLine($"[green]Stored command defaults in {EnvironmentVariableNames.Defaults}.[/]");
             }
             else
             {
@@ -237,7 +228,7 @@ public class AskCommand : AsyncCommand<AskCommandSettings>
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to store command defaults.");
-            RenderError("Unable to store the command defaults in the ASKLLM_DEFAULTS environment variable.");
+            RenderError($"Unable to store the command defaults in the {EnvironmentVariableNames.Defaults} environment variable.");
             return false;
         }
     }

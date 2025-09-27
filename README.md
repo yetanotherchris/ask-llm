@@ -78,6 +78,27 @@ dotnet restore
 dotnet run --project AskLlm.csproj -- --model gpt-4o-mini "Hello there"
 ```
 
+### Publishing
+
+Publishing uses Native AOT so the app starts quickly while remaining self-contained. When you're ready to ship a release build, run:
+
+```bash
+dotnet publish -c Release -r linux-x64 -p:StripSymbols=true
+```
+
+Replace `linux-x64` with the runtime identifier you need (for example, `win-x64` or `osx-arm64`). The output single-file binary bundles the required .NET runtime so it can run on machines without the SDK installed.
+
+### Startup performance
+
+The first-run startup time improves significantly when using the Native AOT publish profile. Measurements were taken inside a Ubuntu 22.04 container with `askllm --help` and a fresh `DOTNET_CLI_HOME` to avoid a warmed .NET runtime.
+
+| Publish mode | Publish command | Cold start (s) |
+| --- | --- | --- |
+| Self-contained (JIT) | `dotnet publish -c Release -r linux-x64 -p:PublishAot=false -p:SelfContained=true -p:PublishSingleFile=true -p:StripSymbols=true` | 0.510 |
+| Native AOT | `dotnet publish -c Release -r linux-x64 -p:StripSymbols=true` | 0.074 |
+
+Your exact results will vary depending on hardware, runtime identifier, and the prompt you execute, but the relative difference between JIT and Native AOT publishing should remain similar.
+
 ## Development
 
 ```bash
