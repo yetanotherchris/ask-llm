@@ -20,8 +20,8 @@ public static class Program
         await using var provider = services.BuildServiceProvider();
         await using var scope = provider.CreateAsyncScope();
 
-        var defaultsMerger = scope.ServiceProvider.GetRequiredService<EnvironmentDefaultsMerger>();
-        var mergedArgs = defaultsMerger.MergeWithStoredDefaults(args);
+        var defaultsStore = scope.ServiceProvider.GetRequiredService<DefaultsStore>();
+        var mergedArgs = defaultsStore.MergeWithStoredDefaults(args);
 
         var commandFactory = scope.ServiceProvider.GetRequiredService<RootCommandFactory>();
         var rootCommand = commandFactory.Create(GetVersion());
@@ -45,7 +45,7 @@ public static class Program
         services.AddSingleton(AskLlmSettings.Create(configuration));
         services.AddScoped<IChatEndpointService, ChatEndpointService>();
         services.AddScoped<AskCommand>();
-        services.AddSingleton<EnvironmentDefaultsMerger>();
+        services.AddSingleton<DefaultsStore>();
         services.AddScoped<RootCommandFactory>();
 
         return services;

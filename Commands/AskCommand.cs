@@ -5,6 +5,7 @@ using AskLlm.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using static Crayon.Output;
 
@@ -14,11 +15,13 @@ public sealed class AskCommand
 {
     private readonly IChatEndpointService _chatEndpointService;
     private readonly ILogger<AskCommand> _logger;
+    private readonly DefaultsStore _defaultsStore;
 
-    public AskCommand(IChatEndpointService chatEndpointService, ILogger<AskCommand> logger)
+    public AskCommand(IChatEndpointService chatEndpointService, ILogger<AskCommand> logger, DefaultsStore defaultsStore)
     {
         _chatEndpointService = chatEndpointService;
         _logger = logger;
+        _defaultsStore = defaultsStore;
     }
 
     public async Task<int> ExecuteAsync(AskCommandSettings settings, CancellationToken cancellationToken)
@@ -155,28 +158,52 @@ public sealed class AskCommand
 
     private bool TryStoreCommandDefaults(AskCommandSettings settings)
     {
-        try
+        var defaults = BuildDefaultsString(settings);
+        var success = _defaultsStore.TryStoreDefaults(defaults);
+        
+        if (!success)
         {
-            var defaults = BuildDefaultsString(settings);
-            Environment.SetEnvironmentVariable(EnvironmentVariableNames.Defaults, string.IsNullOrWhiteSpace(defaults) ? null : defaults, EnvironmentVariableTarget.User);
+            RenderError($"Unable to store the command defaults in the {EnvironmentVariableNames.Defaults} environment variable.");
+            return false;
+        }
 
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
             if (!string.IsNullOrWhiteSpace(defaults))
             {
-                Console.WriteLine(Bright.Green($"Stored command defaults in {EnvironmentVariableNames.Defaults}."));
+                Console.WriteLine(Bright.Green($"Stored command defaults in {EnvironmentVariableNames.Defaults} for user profile."));
             }
             else
             {
                 Console.WriteLine(Bright.Green("Cleared stored command defaults."));
             }
-
-            return true;
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Failed to store command defaults.");
-            RenderError($"Unable to store the command defaults in the {EnvironmentVariableNames.Defaults} environment variable.");
-            return false;
+            if (!string.IsNullOrWhiteSpace(defaults))
+            {
+                Console.WriteLine(Bright.Green($"Stored command defaults in {EnvironmentVariableNames.Defaults} for current session."));
+                if (success)
+                {
+                    Console.WriteLine(Bright.Green("Also added to shell profile for persistence across sessions."));
+                }
+                else
+                {
+                    Console.WriteLine(Bright.Yellow("Note: Could not write to shell profile. Defaults will only persist for this session."));
+                    Console.WriteLine(Bright.Yellow($"To make persistent, add this to your shell profile: export {EnvironmentVariableNames.Defaults}=\"{defaults}\""));
+                }
+            }
+            else
+            {
+                Console.WriteLine(Bright.Green("Cleared stored command defaults for current session."));
+                if (success)
+                {
+                    Console.WriteLine(Bright.Green("Also removed from shell profile."));
+                }
+            }
         }
+
+        return true;
     }
 
     private static string BuildDefaultsString(AskCommandSettings settings)
