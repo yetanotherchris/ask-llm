@@ -53,10 +53,20 @@ jobs:
         id: set_output
         shell: pwsh
         run: |
-          "VERSION=${{ steps.get_version.outputs.MajorMinorPatch }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $version = "${{ steps.get_version.outputs.MajorMinorPatch }}"
+          if ([string]::IsNullOrEmpty($version)) {
+            $version = "0.1.0"
+          }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Set VERSION env
-        run: echo "VERSION=${{ steps.get_version.outputs.MajorMinorPatch }}" >> $GITHUB_ENV
+        shell: pwsh
+        run: |
+          $version = "${{ steps.get_version.outputs.MajorMinorPatch }}"
+          if ([string]::IsNullOrEmpty($version)) {
+            $version = "0.1.0"
+          }
+          echo "VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

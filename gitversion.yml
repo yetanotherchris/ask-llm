@@ -1,4 +1,14 @@
+mode: ContinuousDeployment
 branches:
-  # Use the Git tag for releases, e.g. v1.2.3 (it needs to be in Major.Minor.Patch format)
   main:
     increment: None
+    regex: ^master$|^main$
+  feature:
+    increment: Minor
+  release:
+    increment: Patch
+  hotfix:
+    increment: Patch
+ignore:
+  sha: []
+merge-message-formats: {}
