@@ -14,7 +14,7 @@ See the [provider examples](providers.md) for configuring Gemini, Claude, ChatGP
 # Persist the env var in ~/.bashrc 
 export ASK_LLM_API_KEY='sk-123'
 
-askllm --model "x-ai/grok-4-fast:free" --prompt "Write a haiku about dotnet"
+askllm --model "google/gemini-2.0-flash-exp:free" --prompt "Write a haiku about dotnet"
 askllm --model "deepseek/deepseek-r1-0528:free" --prompt "What is love?" --store
 askllm --prompt "Tell me about Camus's Myth of Sisyphus in one paragraph"
 
