@@ -7,6 +7,13 @@ These examples use [www.openrouter.ai's model names](https://openrouter.ai/model
 See the [provider examples](providers.md) for configuring Gemini, Claude, ChatGPT etc.
 
 ```bash
+# Powershell (use control panel/edit environmental variables to persist)
+# $env:ASK_LLM_API_KEY="sk-123"
+
+# Bash
+export ASK_LLM_API_KEY='sk-123'
+# Persis the line above in ~/.bashrc 
+
 askllm --model "x-ai/grok-4-fast:free" --prompt "Write a haiku about dotnet"
 askllm --model "deepseek/deepseek-r1-0528:free" --prompt "What is love?" --store
 askllm --prompt "Tell me about Camus's Myth of Sisyphus in one paragraph"
