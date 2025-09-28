@@ -11,8 +11,8 @@ See the [provider examples](providers.md) for configuring Gemini, Claude, ChatGP
 # $env:ASK_LLM_API_KEY="sk-123"
 
 # Bash
+# Persist the env var in ~/.bashrc 
 export ASK_LLM_API_KEY='sk-123'
-# Persis the line above in ~/.bashrc 
 
 askllm --model "x-ai/grok-4-fast:free" --prompt "Write a haiku about dotnet"
 askllm --model "deepseek/deepseek-r1-0528:free" --prompt "What is love?" --store
