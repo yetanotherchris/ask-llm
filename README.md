@@ -3,8 +3,7 @@ Ask an LLM (OpenAI-compatible API) something from your terminal.
 
 ## Example usage
 
-These examples use [www.openrouter.ai's model names](https://openrouter.ai/models?q=free).  
-See the [provider examples](providers.md) for configuring Gemini, Claude, ChatGPT etc.
+These examples use [www.openrouter.ai's model names](https://openrouter.ai/models?q=free). See the [provider examples](providers.md) for configuring Gemini, Claude, ChatGPT etc.
 
 ```bash
 # Powershell (use control panel/edit environmental variables to persist)
@@ -27,6 +26,20 @@ Why is that?" > input.txt
 
 askllm --input-file "input.txt" --output-file "response.txt"
 
+```
+
+**You can use it with local models too:**
+```bash
+# Powershell examples
+# ollama
+$env:ASKLLM_API_KEY="(not used)"
+$env:ASKLLM_API_ENDPOINT="http://localhost:11434/v1/"
+askllm --model "gemma3:latest" --prompt "Tell me about the sky in 1 sentence"
+
+# openweb-ui (settings->account to get an API key)
+$env:ASKLLM_API_KEY="sk-123"
+$env:ASKLLM_API_ENDPOINT="http://localhost:3000/api/"
+askllm --model "gemma3:latest" --prompt "Tell me about the moon in 1 sentence"
 ```
 
 ## Download
