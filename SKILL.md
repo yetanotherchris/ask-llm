@@ -44,6 +44,9 @@ Claude Desktop runs commands in a sandboxed shell that does not load the user's 
 ASKLLM_API_KEY=sk-your-key-here
 ```
 
+This is the directory that Claude Cowork has accses to.  
+The virtiofs sandbox does not expose the Documents folder via bash, so use the `mcp__filesystem__read_file` tool to read this file.
+
 **macOS/Linux (Claude Desktop or sandboxed shells):** Before running `askllm`, source the user's shell profile to load the environment variable:
 ```bash
 source ~/.bashrc 2>/dev/null || source ~/.zshrc 2>/dev/null || true
