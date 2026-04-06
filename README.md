@@ -7,11 +7,11 @@ These examples use [www.openrouter.ai's model names](https://openrouter.ai/model
 
 ```bash
 # Powershell (use control panel/edit environmental variables to persist)
-# $env:ASK_LLM_API_KEY="sk-123"
+# $env:ASKLLM_API_KEY="sk-123"
 
 # Bash
 # Persist the env var in ~/.bashrc 
-export ASK_LLM_API_KEY='sk-123'
+export ASKLLM_API_KEY='sk-123'
 
 askllm --model "openrouter/auto" --prompt "Write a haiku about dotnet"
 askllm --model "deepseek/deepseek-r1-0528:free" --prompt "What is love?" --store
@@ -42,12 +42,13 @@ $env:ASKLLM_API_ENDPOINT="http://localhost:3000/api/"
 askllm --model "gemma3:latest" --prompt "Tell me about the moon in 1 sentence"
 ```
 
-## Download
+## Installation
 
-[![GitHub Release](https://img.shields.io/github/v/release/yetanotherchris/ask-llm?logo=github&sort=semver)](https://github.com/yetanotherchris/ask-llm/releases/latest)  
-*Note: you do not need .NET installed for askllm to work, it is standalone.*
+[![GitHub Release](https://img.shields.io/github/v/release/yetanotherchris/ask-llm?logo=github&sort=semver)](https://github.com/yetanotherchris/ask-llm/releases/latest)
 
-**Package managers**
+`askllm` is a standalone binary — it is **not** an NPM package and does not require Node.js, .NET, or any other runtime to be installed. Just download the binary for your platform and run it.
+
+### Package managers
 
 Scoop on Windows:
 ```powershell
@@ -61,33 +62,38 @@ brew tap yetanotherchris/ask-llm https://github.com/yetanotherchris/ask-llm
 brew install ask-llm
 ```
 
-**Via your terminal**
+### Direct download
 
+**Windows (PowerShell):**
 ```powershell
 Invoke-WebRequest -Uri "https://github.com/yetanotherchris/ask-llm/releases/latest/download/askllm.exe" -OutFile "askllm.exe"
 ```
+
+**Linux/macOS (wget):**
 ```bash
 wget -O askllm "https://github.com/yetanotherchris/ask-llm/releases/latest/download/askllm"
 chmod +x askllm
 ```
+
+**Linux/macOS (curl):**
 ```bash
 curl -L "https://github.com/yetanotherchris/ask-llm/releases/latest/download/askllm" -o askllm
 chmod +x askllm
 ```
 
-And finally the [Github Releases page](https://github.com/yetanotherchris/ask-llm/releases).
+Or download directly from the [GitHub Releases page](https://github.com/yetanotherchris/ask-llm/releases).
 
 
 ## Configuration
 
 ask-llm reads its configuration from environment variables:
 
-- `ASK_LLM_API_KEY` (required): API key used to authenticate with your OpenAI-compatible endpoint.
-- `ASK_LLM_API_ENDPOINT` (optional): Override the default endpoint (`https://openrouter.ai/api/v1`).
+- `ASKLLM_API_KEY` (required): API key used to authenticate with your OpenAI-compatible endpoint.
+- `ASKLLM_API_ENDPOINT` (optional): Override the default endpoint (`https://openrouter.ai/api/v1`).
 
 See the [provider examples](providers.md) for common OpenAI-compatible providers, their base URLs, and how to create API keys.
 
-`ASK_LLM_DEFAULT` is used to store default command line options, but not the prompt. On Linux and Mac this will be written to your bash profile.
+`ASKLLM_DEFAULTS` is used to store default command line options, but not the prompt. On Linux and Mac this will be written to your bash profile.
 
 ## Usage
 

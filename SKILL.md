@@ -17,11 +17,43 @@ Use this skill when you need to:
 - Compare responses across different models
 - Store default model settings for repeated use
 
+## Installation
+
+`askllm` is a standalone binary — it is **not** an NPM/Node.js package. It does not require any runtime. Install via Homebrew, Scoop, or download the binary from [GitHub Releases](https://github.com/yetanotherchris/ask-llm/releases/latest).
+
+```bash
+# macOS/Linux
+brew tap yetanotherchris/ask-llm https://github.com/yetanotherchris/ask-llm
+brew install ask-llm
+```
+
+If `askllm` is not found on the PATH, check if it is installed first before trying to use it.
+
 ## Prerequisites
 
 The environment variable `ASKLLM_API_KEY` must be set with a valid API key for the LLM provider. If it is not set, inform the user they need to configure it first.
 
 Optionally, `ASKLLM_API_ENDPOINT` can be set to a custom API endpoint. It defaults to OpenRouter (`https://openrouter.ai/api/v1`).
+
+### Claude Desktop environment variable access
+
+Claude Desktop runs commands in a sandboxed shell that does not load the user's shell profile (`~/.bashrc`, `~/.zshrc`, etc.), so environment variables set there will not be available.
+
+**Windows (Claude Desktop):** Place a `.env` file at `C:\Users\<yourUsername>\Documents\Claude\.env` containing:
+```
+ASKLLM_API_KEY=sk-your-key-here
+```
+
+**macOS/Linux (Claude Desktop or sandboxed shells):** Before running `askllm`, source the user's shell profile to load the environment variable:
+```bash
+source ~/.bashrc 2>/dev/null || source ~/.zshrc 2>/dev/null || true
+askllm --model "openrouter/auto" --prompt "hello"
+```
+
+Alternatively, if the env var is still not set after sourcing, grep for it in the user's profile:
+```bash
+eval "$(grep 'ASKLLM_API_KEY' ~/.bashrc ~/.zshrc 2>/dev/null | head -1)"
+```
 
 ## Usage
 
