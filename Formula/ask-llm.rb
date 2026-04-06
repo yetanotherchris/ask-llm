@@ -1,33 +1,33 @@
 class AskLlm < Formula
   desc "Ask any large language model from your terminal via OpenAI-compatible APIs"
   homepage "https://github.com/yetanotherchris/ask-llm"
-  version "1.4.0"
+  version "1.5.0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/yetanotherchris/ask-llm/releases/download/v1.4.0/askllm-v1.4.0-osx-arm64"
-      sha256 "6a0d5e9bc72cda84344af08bcc661ec47f38d2f744afadab42a11d3631aea514"
+      url "https://github.com/yetanotherchris/ask-llm/releases/download/v1.5.0/askllm-v1.5.0-osx-arm64"
+      sha256 "98bf0ec3f5358796368ab774059f49e03bc4e7e1e32e5783c3ab33818be0982c"
     else
-      url "https://github.com/yetanotherchris/ask-llm/releases/download/v1.4.0/askllm-v1.4.0-osx-x64"
-      sha256 "7ea138a0e27e54b10822df9698848b1e472f974767b94849dde045b6ec89c836"
+      url "https://github.com/yetanotherchris/ask-llm/releases/download/v1.5.0/askllm-v1.5.0-osx-x64"
+      sha256 "f88c31ec9e68979e63694c30414ac161a370c532a748fc6416113e6b8afe4211"
     end
   end
 
   on_linux do
-    url "https://github.com/yetanotherchris/ask-llm/releases/download/v1.4.0/askllm-v1.4.0-linux-x64"
-    sha256 "e1f5c49aaa533063c234abd48531e083c17e84d9d2734588310a6859e9e64fb3"
+    url "https://github.com/yetanotherchris/ask-llm/releases/download/v1.5.0/askllm-v1.5.0-linux-x64"
+    sha256 "9b830ad5e0e9d1d5740a8b03705fd5f7a9802fd9c8023dfc154a8cb64d9187ec"
   end
 
   def install
     if OS.mac?
       if Hardware::CPU.arm?
-        bin.install "askllm-v1.4.0-osx-arm64" => "askllm"
+        bin.install "askllm-v1.5.0-osx-arm64" => "askllm"
       else
-        bin.install "askllm-v1.4.0-osx-x64" => "askllm"
+        bin.install "askllm-v1.5.0-osx-x64" => "askllm"
       end
     else
-      bin.install "askllm-v1.4.0-linux-x64" => "askllm"
+      bin.install "askllm-v1.5.0-linux-x64" => "askllm"
     end
   end
 
@@ -35,6 +35,7 @@ class AskLlm < Formula
     assert_match "USAGE:", shell_output("#{bin}/askllm --help")
   end
 end
+
 
 
 
