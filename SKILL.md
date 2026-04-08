@@ -31,32 +31,37 @@ If `askllm` is not found on the PATH, check if it is installed first before tryi
 
 ## Prerequisites
 
-The environment variable `ASKLLM_API_KEY` must be set with a valid API key for the LLM provider. If it is not set, inform the user they need to configure it first.
+The environment variable `ASKLLM_API_KEY` must be set with a valid API key for the LLM provider.
 
 Optionally, `ASKLLM_API_ENDPOINT` can be set to a custom API endpoint. It defaults to OpenRouter (`https://openrouter.ai/api/v1`).
 
-### Claude Desktop environment variable access
+### Setting the API key in sandboxed environments (Claude Desktop / Claude Web)
 
-Claude Desktop runs commands in a sandboxed shell that does not load the user's shell profile (`~/.bashrc`, `~/.zshrc`, etc.), so environment variables set there will not be available.
+Claude Desktop and Claude Web run commands in a sandboxed shell that does **not** have access to the user's shell profile (`~/.bashrc`, `~/.zshrc`, etc.), so environment variables set there will not be available.
 
-**Windows (Claude Desktop):** Place a `.env` file at `C:\Users\<yourUsername>\Documents\Claude\.env` containing:
-```
-ASKLLM_API_KEY=sk-your-key-here
-```
+Before running `askllm`, check if `ASKLLM_API_KEY` is set:
 
-This is the directory that Claude Cowork has accses to.  
-The virtiofs sandbox does not expose the Documents folder via bash, so use the `mcp__filesystem__read_file` tool to read this file.
-
-**macOS/Linux (Claude Desktop or sandboxed shells):** Before running `askllm`, source the user's shell profile to load the environment variable:
 ```bash
-source ~/.bashrc 2>/dev/null || source ~/.zshrc 2>/dev/null || true
-askllm --model "openrouter/auto" --prompt "hello"
+echo "$ASKLLM_API_KEY"
 ```
 
-Alternatively, if the env var is still not set after sourcing, grep for it in the user's profile:
+If it is empty, **ask the user to provide their API key**. Once they provide it, export it for the session:
+
 ```bash
-eval "$(grep 'ASKLLM_API_KEY' ~/.bashrc ~/.zshrc 2>/dev/null | head -1)"
+export ASKLLM_API_KEY="<key provided by the user>"
 ```
+
+Tell the user they can avoid being asked each session by adding the key to their Claude Code user settings at `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "ASKLLM_API_KEY": "sk-your-key-here"
+  }
+}
+```
+
+This file is local to the user's machine, not committed to git, and is loaded automatically by Claude Code.
 
 ## Usage
 
