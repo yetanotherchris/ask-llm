@@ -31,31 +31,42 @@ If `askllm` is not found on the PATH, check if it is installed first before tryi
 
 ## Prerequisites
 
-The environment variable `ASKLLM_API_KEY` must be set with a valid API key for the LLM provider. If it is not set, inform the user they need to configure it first.
+The environment variable `ASKLLM_API_KEY` must be set with a valid API key for the LLM provider.
 
 Optionally, `ASKLLM_API_ENDPOINT` can be set to a custom API endpoint. It defaults to OpenRouter (`https://openrouter.ai/api/v1`).
 
-### Claude Desktop environment variable access
+### Claude Desktop
 
-Claude Desktop runs commands in a sandboxed shell that does not load the user's shell profile (`~/.bashrc`, `~/.zshrc`, etc.), so environment variables set there will not be available.
+Claude Desktop runs commands in a sandboxed shell that does **not** load the user's shell profile (`~/.bashrc`, `~/.zshrc`, etc.). However, it can read the local filesystem.
 
-**Windows (Claude Desktop):** Place a `.env` file at `C:\Users\<yourUsername>\Documents\Claude\.env` containing:
+Users can store the API key persistently in their Claude Code user settings at `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "ASKLLM_API_KEY": "sk-your-key-here"
+  }
+}
 ```
-ASKLLM_API_KEY=sk-your-key-here
-```
 
-This is the directory that Claude Cowork has accses to.  
-The virtiofs sandbox does not expose the Documents folder via bash, so use the `mcp__filesystem__read_file` tool to read this file.
+This file is local to the user's machine, not committed to git, and is loaded automatically by Claude Code. Once configured, the key is available in every session.
 
-**macOS/Linux (Claude Desktop or sandboxed shells):** Before running `askllm`, source the user's shell profile to load the environment variable:
+If `ASKLLM_API_KEY` is not set, tell the user to add it to `~/.claude/settings.json` as shown above.
+
+### Claude Web
+
+Claude Web runs in a remote sandbox with no access to the user's local filesystem. The API key cannot be persisted between sessions.
+
+Before running `askllm`, check if `ASKLLM_API_KEY` is set:
+
 ```bash
-source ~/.bashrc 2>/dev/null || source ~/.zshrc 2>/dev/null || true
-askllm --model "openrouter/auto" --prompt "hello"
+echo "$ASKLLM_API_KEY"
 ```
 
-Alternatively, if the env var is still not set after sourcing, grep for it in the user's profile:
+If it is empty, **ask the user to provide their API key**. Once they provide it, export it for the session:
+
 ```bash
-eval "$(grep 'ASKLLM_API_KEY' ~/.bashrc ~/.zshrc 2>/dev/null | head -1)"
+export ASKLLM_API_KEY="<key provided by the user>"
 ```
 
 ## Usage
