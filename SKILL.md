@@ -51,7 +51,14 @@ Users can store the API key persistently in their Claude Code user settings at `
 
 This file is local to the user's machine, not committed to git, and is loaded automatically by Claude Code. Once configured, the key is available in every session.
 
-If `ASKLLM_API_KEY` is not set, tell the user to add it to `~/.claude/settings.json` as shown above.
+If `ASKLLM_API_KEY` is not set:
+
+1. Ask the user to provide their API key.
+2. If they provide a key, write it to `~/.claude/settings.json` using the Edit or Write tool (do **not** use bash — the shell is sandboxed). Read the file first; if it already exists, merge the key into the existing `env` object. If the file does not exist, create it with the structure shown above.
+3. After writing, also export the key for the current session so it is available immediately:
+   ```bash
+   export ASKLLM_API_KEY="<key>"
+   ```
 
 ### Claude Web
 
