@@ -58,7 +58,7 @@ If `ASKLLM_API_KEY` is not set:
 
 1. Ask the user to provide their API key.
 2. **On macOS / Linux:** If they provide a key, write it to `~/.claude/settings.json` using the Edit or Write tool (do **not** use bash — the shell is sandboxed). Read the file first; if it already exists, merge the key into the existing `env` object. If the file does not exist, create it with the structure shown above.
-3. **On Windows:** Claude Desktop's filesystem access is sandboxed and cannot reach the settings file. Tell the user to add the key to their settings file at `%APPDATA%\claude\settings.json` for future sessions (using the JSON snippet above), then ask them to paste the key in chat so you can export it for the current session.
+3. **On Windows:** Claude Desktop's filesystem access is sandboxed and cannot reach the settings file. Ask the user to paste the key in chat so you can export it for the current session. Also give them instructions on how to add it to their settings file at `%APPDATA%\claude\settings.json` so it persists across sessions — show them the JSON snippet above and explain how to create the file and folder if they don't exist.
 4. Export the key for the current session so it is available immediately:
    ```bash
    export ASKLLM_API_KEY="<key>"
