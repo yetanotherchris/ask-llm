@@ -35,9 +35,27 @@ The environment variable `ASKLLM_API_KEY` must be set with a valid API key for t
 
 Optionally, `ASKLLM_API_ENDPOINT` can be set to a custom API endpoint. It defaults to OpenRouter (`https://openrouter.ai/api/v1`).
 
-### Setting the API key in sandboxed environments (Claude Desktop / Claude Web)
+### Claude Desktop
 
-Claude Desktop and Claude Web run commands in a sandboxed shell that does **not** have access to the user's shell profile (`~/.bashrc`, `~/.zshrc`, etc.), so environment variables set there will not be available.
+Claude Desktop runs commands in a sandboxed shell that does **not** load the user's shell profile (`~/.bashrc`, `~/.zshrc`, etc.). However, it can read the local filesystem.
+
+Users can store the API key persistently in their Claude Code user settings at `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "ASKLLM_API_KEY": "sk-your-key-here"
+  }
+}
+```
+
+This file is local to the user's machine, not committed to git, and is loaded automatically by Claude Code. Once configured, the key is available in every session.
+
+If `ASKLLM_API_KEY` is not set, tell the user to add it to `~/.claude/settings.json` as shown above.
+
+### Claude Web
+
+Claude Web runs in a remote sandbox with no access to the user's local filesystem. The API key cannot be persisted between sessions.
 
 Before running `askllm`, check if `ASKLLM_API_KEY` is set:
 
@@ -50,18 +68,6 @@ If it is empty, **ask the user to provide their API key**. Once they provide it,
 ```bash
 export ASKLLM_API_KEY="<key provided by the user>"
 ```
-
-Tell the user they can avoid being asked each session by adding the key to their Claude Code user settings at `~/.claude/settings.json`:
-
-```json
-{
-  "env": {
-    "ASKLLM_API_KEY": "sk-your-key-here"
-  }
-}
-```
-
-This file is local to the user's machine, not committed to git, and is loaded automatically by Claude Code.
 
 ## Usage
 
