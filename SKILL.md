@@ -57,7 +57,28 @@ If `ASKLLM_API_KEY` is not set, ask the user to provide their API key and write 
 
 ### Claude Web
 
-This skill is not compatible with Claude Web.
+The `askllm` binary is not available in Claude Web. Instead, query LLMs directly via the OpenRouter API using a non-streaming HTTP request.
+
+Before making a request, ask the user for their OpenRouter API key if it is not already known.
+
+**Request:**
+
+```bash
+curl -s https://openrouter.ai/api/v1/chat/completions \
+  -H "Authorization: Bearer <OPENROUTER_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "google/gemini-2.0-flash-001",
+    "messages": [{"role": "user", "content": "Your prompt here"}],
+    "stream": false
+  }'
+```
+
+**Response handling:**
+
+- The response text is at `choices[0].message.content`.
+- Token usage is in the `usage` object (`prompt_tokens`, `completion_tokens`).
+- Errors return a JSON object with an `error` field containing a message and code.
 
 ## Usage
 
