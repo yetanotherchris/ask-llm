@@ -45,11 +45,13 @@ export ASKLLM_API_KEY="<key>"
 
 ### Claude Desktop
 
-Claude Desktop requires the user to be inside a project. The API key should be stored in a `.env` file in the project root:
+Claude Desktop requires the user to be inside a project. The API key should be stored in a `.env` file (a shell-style environment variables file) in the project root:
 
-```
+```env
 ASKLLM_API_KEY=sk-your-key-here
 ```
+
+Each line uses `KEY=VALUE` format. Do not add quotes, spaces around `=`, or `export` prefixes.
 
 If `ASKLLM_API_KEY` is not set, ask the user to provide their API key and write it to the `.env` file in the project root.
 
