@@ -59,17 +59,7 @@ If `ASKLLM_API_KEY` is not set, ask the user to provide their API key and write 
 
 The `askllm` binary is not available in Claude Web. Instead, query LLMs directly via the OpenRouter API using a non-streaming HTTP request.
 
-Before making a request, ask the user for their OpenRouter API key if it is not already known. Also ask them which model to use. The `model` field must be set to an OpenRouter model identifier. Common models include:
-
-| Model | Identifier |
-|---|---|
-| GPT-4o | `openai/gpt-4o` |
-| Claude 3.5 Sonnet | `anthropic/claude-3.5-sonnet` |
-| Gemini 2.0 Flash | `google/gemini-2.0-flash-001` |
-| DeepSeek R1 | `deepseek/deepseek-r1` |
-| Mistral Large | `mistralai/mistral-large` |
-| Llama 3.1 70B | `meta-llama/llama-3.1-70b-instruct` |
-| Auto (OpenRouter picks) | `openrouter/auto` |
+Before making a request, ask the user for their OpenRouter API key and which model to use. The `model` field must be set to an OpenRouter model identifier (e.g. `openai/gpt-4o`, `google/gemini-2.0-flash-001`).
 
 **Request:**
 
