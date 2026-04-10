@@ -37,72 +37,25 @@ Optionally, `ASKLLM_API_ENDPOINT` can be set to a custom API endpoint. It defaul
 
 ### Claude Code
 
-Claude Code runs commands in a sandboxed shell that does **not** load the user's shell profile (`~/.bashrc`, `~/.zshrc`, etc.). However, it can read the local filesystem.
+Claude Code can read `ASKLLM_API_KEY` from the environment. If it is not set, ask the user to provide their API key and export it for the current session:
 
-Users can store the API key persistently in their Claude Code user settings file:
-
-- **macOS / Linux:** `~/.claude/settings.json`
-- **Windows:** `C:\Users\<username>\.claude\settings.json`
-
-```json
-{
-  "env": {
-    "ASKLLM_API_KEY": "sk-your-key-here"
-  }
-}
+```bash
+export ASKLLM_API_KEY="<key>"
 ```
-
-This file is local to the user's machine, not committed to git, and is loaded automatically by Claude Code. Once configured, the key is available in every session.
-
-If `ASKLLM_API_KEY` is not set:
-
-1. Ask the user to provide their API key.
-2. **On macOS / Linux:** If they provide a key, write it to `~/.claude/settings.json` using the Edit or Write tool (do **not** use bash — the shell is sandboxed). Read the file first; if it already exists, merge the key into the existing `env` object. If the file does not exist, create it with the structure shown above.
-3. **On Windows:** Ask the user to paste the key in chat so you can export it for the current session. Also give them instructions on how to add it to their settings file at `C:\Users\<username>\.claude\settings.json` so it persists across sessions — show them the JSON snippet above and explain how to create the file and folder if they don't exist.
-4. Export the key for the current session so it is available immediately:
-   ```bash
-   export ASKLLM_API_KEY="<key>"
-   ```
 
 ### Claude Desktop
 
-Claude Desktop uses a separate configuration file from Claude Code:
+Claude Desktop requires the user to be inside a project. The API key should be stored in a `.env` file in the project root:
 
-- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
-
-```json
-{
-  "env": {
-    "ASKLLM_API_KEY": "sk-your-key-here"
-  }
-}
+```
+ASKLLM_API_KEY=sk-your-key-here
 ```
 
-If `ASKLLM_API_KEY` is not set in Claude Desktop:
-
-1. Ask the user to provide their API key.
-2. Give them instructions on how to add it to their `claude_desktop_config.json` file at the platform-specific path above. Show them the JSON snippet and explain how to merge the `env` key into the existing config if the file already exists.
-3. Export the key for the current session so it is available immediately:
-   ```bash
-   export ASKLLM_API_KEY="<key>"
-   ```
+If `ASKLLM_API_KEY` is not set, ask the user to provide their API key and write it to the `.env` file in the project root.
 
 ### Claude Web
 
-Claude Web runs in a remote sandbox with no access to the user's local filesystem. The API key cannot be persisted between sessions.
-
-Before running `askllm`, check if `ASKLLM_API_KEY` is set:
-
-```bash
-echo "$ASKLLM_API_KEY"
-```
-
-If it is empty, **ask the user to provide their API key**. Once they provide it, export it for the session:
-
-```bash
-export ASKLLM_API_KEY="<key provided by the user>"
-```
+This skill is not compatible with Claude Web.
 
 ## Usage
 
