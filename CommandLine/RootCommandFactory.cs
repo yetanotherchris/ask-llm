@@ -36,7 +36,7 @@ namespace AskLlm.CommandLine
             };
             var storeDefaultsOption = new Option<bool>("--store", "Store provided options (excluding --prompt) for future runs.");
 
-            const string description =
+            string description =
                 "Send a prompt to an LLM provider.\n\n" +
                 "Environment variables:\n" +
                 $"  {EnvironmentVariableNames.ApiKey,-28} (required) API key for authentication\n" +
