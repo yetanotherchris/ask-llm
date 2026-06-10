@@ -12,7 +12,9 @@ namespace AskLlm.CommandLine
         private bool _disposed = false;
         private readonly Encoding? _originalOutputEncoding;
 
-        public ConsoleSpinner(string message = "Working")
+        public ConsoleSpinner(string message = "Working") : this(() => message) { }
+
+        public ConsoleSpinner(Func<string> getMessage)
         {
             // Set UTF-8 encoding for better Unicode support in PowerShell
             _originalOutputEncoding = Console.OutputEncoding;
@@ -26,10 +28,10 @@ namespace AskLlm.CommandLine
             }
 
             _cts = new CancellationTokenSource();
-            _spinnerTask = SpinAsync(message, _cts.Token);
+            _spinnerTask = SpinAsync(getMessage, _cts.Token);
         }
 
-        private static async Task SpinAsync(string message, CancellationToken token)
+        private static async Task SpinAsync(Func<string> getMessage, CancellationToken token)
         {
             // Keep the original Braille pattern characters
             var spinnerChars = new[] { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' };
@@ -60,7 +62,7 @@ namespace AskLlm.CommandLine
                     var timeStr = elapsed.TotalSeconds < 60
                         ? $"{(int)elapsed.TotalSeconds}s"
                         : $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds:D2}s";
-                    var line = $"\r{spinnerChars[index]} {message} ({timeStr})";
+                    var line = $"\r{spinnerChars[index]} {getMessage()} ({timeStr})";
                     Console.Write(line);
                     lastLineLength = line.Length - 1; // -1 for the \r
                     index = (index + 1) % spinnerChars.Length;

@@ -72,8 +72,9 @@ public sealed class AskCommand
                 if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
                 fileWriter = new StreamWriter(settings.OutputFile!, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-                spinner = new ConsoleSpinner($"Asking '{settings.Model}'...");
-                onToken = token => fileWriter.Write(token);
+                var charsWritten = 0;
+                spinner = new ConsoleSpinner(() => $"Asking '{settings.Model}'... {charsWritten:N0} chars");
+                onToken = token => { fileWriter.Write(token); charsWritten += token.Length; };
             }
             else
             {
