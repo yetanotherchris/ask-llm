@@ -88,7 +88,7 @@ public class ChatEndpointService : IChatEndpointService
         {
             var msg = string.IsNullOrWhiteSpace(_settings.ApiKey)
                 ? $"Access denied (HTTP {ex.Status}). The {EnvironmentVariableNames.ApiKey} environment variable has not been set."
-                : $"Access denied (HTTP {ex.Status}). Check that your API key is correct.";
+                : $"Access denied (HTTP {ex.Status}). Check that the value of {EnvironmentVariableNames.ApiKey} is correct.";
             _logger.LogError(ex, msg);
             return new ChatResponse(string.Empty, request.Model, false, msg);
         }
