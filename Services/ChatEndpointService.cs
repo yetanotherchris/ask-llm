@@ -1,4 +1,5 @@
 using System.Text;
+using AskLlm.CommandLine;
 using AskLlm.Models;
 using Microsoft.Extensions.Logging;
 using OpenAI;
@@ -20,7 +21,7 @@ public class ChatEndpointService : IChatEndpointService
         _logger = logger;
     }
 
-    public async Task<ChatResponse> SendChatRequestAsync(ChatRequest request, CancellationToken cancellationToken = default)
+    public async Task<ChatResponse> SendChatRequestAsync(ChatRequest request, Action<string>? onToken = null, CancellationToken cancellationToken = default)
     {
         if (request is null)
         {
@@ -51,27 +52,28 @@ public class ChatEndpointService : IChatEndpointService
             var credential = new ApiKeyCredential(_settings.ApiKey);
             var clientOptions = new OpenAIClientOptions
             {
-                Endpoint = new Uri(_settings.ApiEndpoint)
+                Endpoint = new Uri(_settings.ApiEndpoint),
+                NetworkTimeout = TimeSpan.FromMinutes(5)
             };
 
             var chatClient = new ChatClient(request.Model, credential, clientOptions);
+            var messages = new ChatMessage[] { new UserChatMessage(request.Message) };
 
-            var completionResult = await chatClient.CompleteChatAsync(
-                new ChatMessage[]
-                {
-                    new UserChatMessage(request.Message)
-                });
+            var sb = new StringBuilder();
 
-            var completion = completionResult.Value;
-
-            if (completion?.Content is null)
+            await foreach (var update in chatClient.CompleteChatStreamingAsync(messages, cancellationToken: cancellationToken))
             {
-                const string missingContentMessage = "The model did not return any content.";
-                _logger.LogWarning(missingContentMessage);
-                return new ChatResponse(string.Empty, request.Model, false, missingContentMessage);
+                foreach (var part in update.ContentUpdate)
+                {
+                    if (part.Kind == ChatMessageContentPartKind.Text && !string.IsNullOrEmpty(part.Text))
+                    {
+                        sb.Append(part.Text);
+                        onToken?.Invoke(part.Text);
+                    }
+                }
             }
 
-            var responseText = ExtractTextFromContent(completion.Content).Trim();
+            var responseText = sb.ToString().Trim();
 
             if (string.IsNullOrEmpty(responseText))
             {
@@ -82,30 +84,18 @@ public class ChatEndpointService : IChatEndpointService
 
             return new ChatResponse(responseText, request.Model, true);
         }
+        catch (ClientResultException ex) when (ex.Status == 401 || ex.Status == 403)
+        {
+            var msg = string.IsNullOrWhiteSpace(_settings.ApiKey)
+                ? $"Access denied (HTTP {ex.Status}). The {EnvironmentVariableNames.ApiKey} environment variable has not been set."
+                : $"Access denied (HTTP {ex.Status}). Check that the value of {EnvironmentVariableNames.ApiKey} is correct.";
+            _logger.LogError(ex, msg);
+            return new ChatResponse(string.Empty, request.Model, false, msg);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send chat request.");
             return new ChatResponse(string.Empty, request.Model, false, ex.Message);
         }
-    }
-
-    private static string ExtractTextFromContent(ChatMessageContent content)
-    {
-        var builder = new StringBuilder();
-
-        foreach (var part in content)
-        {
-            if (part.Kind == ChatMessageContentPartKind.Text && !string.IsNullOrWhiteSpace(part.Text))
-            {
-                if (builder.Length > 0)
-                {
-                    builder.AppendLine();
-                }
-
-                builder.Append(part.Text);
-            }
-        }
-
-        return builder.ToString();
     }
 }

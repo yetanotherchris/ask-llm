@@ -36,7 +36,14 @@ namespace AskLlm.CommandLine
             };
             var storeDefaultsOption = new Option<bool>("--store", "Store provided options (excluding --prompt) for future runs.");
 
-            var rootCommand = new RootCommand("Send a prompt to an LLM provider.")
+            const string description =
+                "Send a prompt to an LLM provider.\n\n" +
+                "Environment variables:\n" +
+                $"  {EnvironmentVariableNames.ApiKey,-28} (required) API key for authentication\n" +
+                $"  {EnvironmentVariableNames.ApiEndpoint,-28} (optional) API endpoint URL (default: https://openrouter.ai/api/v1)\n" +
+                $"  {EnvironmentVariableNames.Defaults,-28} (optional) Stored default options";
+
+            var rootCommand = new RootCommand(description)
             {
                 modelOption,
                 promptOption,
@@ -48,7 +55,7 @@ namespace AskLlm.CommandLine
 
             rootCommand.AddAlias("ask");
             rootCommand.Name = "askllm";
-            rootCommand.Description = "Send a prompt to an LLM provider.";
+            rootCommand.Description = description;
 
             rootCommand.SetHandler(async (context) =>
             {

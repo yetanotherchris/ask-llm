@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace AskLlm.CommandLine
@@ -11,7 +12,9 @@ namespace AskLlm.CommandLine
         private bool _disposed = false;
         private readonly Encoding? _originalOutputEncoding;
 
-        public ConsoleSpinner(string message = "Working")
+        public ConsoleSpinner(string message = "Working") : this(() => message) { }
+
+        public ConsoleSpinner(Func<string> getMessage)
         {
             // Set UTF-8 encoding for better Unicode support in PowerShell
             _originalOutputEncoding = Console.OutputEncoding;
@@ -25,10 +28,10 @@ namespace AskLlm.CommandLine
             }
 
             _cts = new CancellationTokenSource();
-            _spinnerTask = SpinAsync(message, _cts.Token);
+            _spinnerTask = SpinAsync(getMessage, _cts.Token);
         }
 
-        private static async Task SpinAsync(string message, CancellationToken token)
+        private static async Task SpinAsync(Func<string> getMessage, CancellationToken token)
         {
             // Keep the original Braille pattern characters
             var spinnerChars = new[] { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' };
@@ -48,14 +51,22 @@ namespace AskLlm.CommandLine
             }
 
             var index = 0;
+            var stopwatch = Stopwatch.StartNew();
+            var lastLineLength = 0;
 
             try
             {
                 while (!token.IsCancellationRequested)
                 {
-                    Console.Write($"\r{spinnerChars[index]} {message}");
+                    var elapsed = stopwatch.Elapsed;
+                    var timeStr = elapsed.TotalSeconds < 60
+                        ? $"{(int)elapsed.TotalSeconds}s"
+                        : $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds:D2}s";
+                    var line = $"\r{spinnerChars[index]} {getMessage()} ({timeStr})";
+                    Console.Write(line);
+                    lastLineLength = line.Length - 1; // -1 for the \r
                     index = (index + 1) % spinnerChars.Length;
-                    await Task.Delay(100, token);
+                    await Task.Delay(500, token);
                 }
             }
             catch (OperationCanceledException)
@@ -64,10 +75,7 @@ namespace AskLlm.CommandLine
             }
             finally
             {
-                // \r - Moves cursor to the beginning of the current line
-                // Creates a string of spaces to overwrite the spinner text
-                // Second \r - Moves cursor back to the beginning of the line again
-                Console.Write($"\r{new string(' ', message.Length + 5)}\r");
+                Console.Write($"\r{new string(' ', lastLineLength + 2)}\r");
 
                 if (originalCursorVisible.HasValue)
                 {
