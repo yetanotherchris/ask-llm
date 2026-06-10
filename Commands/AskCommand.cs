@@ -59,6 +59,7 @@ public sealed class AskCommand
 
         var request = new ChatRequest(requestMessage!, settings.Model.Trim());
 
+        StreamWriter? fileWriter = null;
         try
         {
             var isOutputToFile = !string.IsNullOrWhiteSpace(settings.OutputFile);
@@ -67,7 +68,12 @@ public sealed class AskCommand
 
             if (isOutputToFile)
             {
+                var directory = Path.GetDirectoryName(settings.OutputFile);
+                if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+                fileWriter = new StreamWriter(settings.OutputFile!, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
                 spinner = new ConsoleSpinner($"Asking '{settings.Model}'...");
+                onToken = token => fileWriter.Write(token);
             }
             else
             {
@@ -78,7 +84,13 @@ public sealed class AskCommand
             var response = await _chatEndpointService.SendChatRequestAsync(request, onToken, cancellationToken);
             spinner?.Dispose();
 
-            if (!isOutputToFile)
+            if (fileWriter != null)
+            {
+                await fileWriter.FlushAsync();
+                await fileWriter.DisposeAsync();
+                fileWriter = null;
+            }
+            else
             {
                 Console.WriteLine();
             }
@@ -96,9 +108,9 @@ public sealed class AskCommand
                 return 1;
             }
 
-            if (isOutputToFile && !await TryWriteOutputFileAsync(settings, response.Content))
+            if (isOutputToFile)
             {
-                return 1;
+                Console.WriteLine(Bright.Green($"Response written to {settings.OutputFile}"));
             }
 
             return 0;
@@ -108,6 +120,10 @@ public sealed class AskCommand
             _logger.LogError(ex, "Unhandled exception while processing ask command.");
             RenderError("An unexpected error occurred. Please try again.");
             return 1;
+        }
+        finally
+        {
+            fileWriter?.Dispose();
         }
     }
 
@@ -128,39 +144,6 @@ public sealed class AskCommand
         }
 
         return (settings.Prompt.Trim(), null);
-    }
-
-    private async Task<bool> TryWriteOutputFileAsync(AskCommandSettings settings, string content)
-    {
-        if (string.IsNullOrWhiteSpace(settings.OutputFile))
-        {
-            return true;
-        }
-
-        try
-        {
-            var directory = Path.GetDirectoryName(settings.OutputFile);
-            if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            await File.WriteAllTextAsync(settings.OutputFile, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            Console.WriteLine(Bright.Green($"Response written to {settings.OutputFile}"));
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to write output file {File}", settings.OutputFile);
-            RenderError("Unable to write the response to the specified output file.");
-            return false;
-        }
-    }
-
-    private void RenderSuccess(ChatResponse response, ConsoleColor? color)
-    {
-        var content = response.Content ?? string.Empty;
-        Console.WriteLine(ApplyColor(content, color));
     }
 
     private void RenderError(string message)
