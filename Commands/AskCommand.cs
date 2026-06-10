@@ -46,7 +46,7 @@ public sealed class AskCommand
 
         if (!_chatEndpointService.IsConfigured)
         {
-            RenderError($"The {EnvironmentVariableNames.ApiKey} environment variable is not configured.");
+            RenderError($"The {EnvironmentVariableNames.ApiKey} environment variable must be set with your API key.");
             return 1;
         }
 
@@ -61,10 +61,27 @@ public sealed class AskCommand
 
         try
         {
+            var isOutputToFile = !string.IsNullOrWhiteSpace(settings.OutputFile);
+            Action<string>? onToken = null;
+            ConsoleSpinner? spinner = null;
 
-            var spinner = new ConsoleSpinner($"Asking '{settings.Model}'...");
-            var response = await _chatEndpointService.SendChatRequestAsync(request, cancellationToken);
-            spinner.Dispose();
+            if (isOutputToFile)
+            {
+                spinner = new ConsoleSpinner($"Asking '{settings.Model}'...");
+            }
+            else
+            {
+                Console.WriteLine($"Asking '{settings.Model}'...\n");
+                onToken = token => Console.Write(ApplyColor(token, responseColor));
+            }
+
+            var response = await _chatEndpointService.SendChatRequestAsync(request, onToken, cancellationToken);
+            spinner?.Dispose();
+
+            if (!isOutputToFile)
+            {
+                Console.WriteLine();
+            }
 
             if (response is null)
             {
@@ -79,14 +96,9 @@ public sealed class AskCommand
                 return 1;
             }
 
-            if (!await TryWriteOutputFileAsync(settings, response.Content))
+            if (isOutputToFile && !await TryWriteOutputFileAsync(settings, response.Content))
             {
                 return 1;
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.OutputFile))
-            {
-                RenderSuccess(response, responseColor);
             }
 
             return 0;

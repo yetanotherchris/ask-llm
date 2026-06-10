@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace AskLlm.CommandLine
@@ -48,14 +49,22 @@ namespace AskLlm.CommandLine
             }
 
             var index = 0;
+            var stopwatch = Stopwatch.StartNew();
+            var lastLineLength = 0;
 
             try
             {
                 while (!token.IsCancellationRequested)
                 {
-                    Console.Write($"\r{spinnerChars[index]} {message}");
+                    var elapsed = stopwatch.Elapsed;
+                    var timeStr = elapsed.TotalSeconds < 60
+                        ? $"{(int)elapsed.TotalSeconds}s"
+                        : $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds:D2}s";
+                    var line = $"\r{spinnerChars[index]} {message} ({timeStr})";
+                    Console.Write(line);
+                    lastLineLength = line.Length - 1; // -1 for the \r
                     index = (index + 1) % spinnerChars.Length;
-                    await Task.Delay(100, token);
+                    await Task.Delay(500, token);
                 }
             }
             catch (OperationCanceledException)
@@ -64,10 +73,7 @@ namespace AskLlm.CommandLine
             }
             finally
             {
-                // \r - Moves cursor to the beginning of the current line
-                // Creates a string of spaces to overwrite the spinner text
-                // Second \r - Moves cursor back to the beginning of the line again
-                Console.Write($"\r{new string(' ', message.Length + 5)}\r");
+                Console.Write($"\r{new string(' ', lastLineLength + 2)}\r");
 
                 if (originalCursorVisible.HasValue)
                 {

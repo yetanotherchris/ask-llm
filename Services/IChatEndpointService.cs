@@ -6,5 +6,5 @@ public interface IChatEndpointService
 {
     bool IsConfigured { get; }
 
-    Task<ChatResponse> SendChatRequestAsync(ChatRequest request, CancellationToken cancellationToken = default);
+    Task<ChatResponse> SendChatRequestAsync(ChatRequest request, Action<string>? onToken = null, CancellationToken cancellationToken = default);
 }
